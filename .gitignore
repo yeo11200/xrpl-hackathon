@@ -27,3 +27,7 @@ dist-ssr
 */.env.*
 질문.md
 */dist
+
+*/package-lock.json
+
+*/pnpm-lock.yaml

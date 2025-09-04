@@ -50,6 +50,26 @@ const schemas = {
       .valid("all", "sent", "received", "pending")
       .default("all"),
   }),
+
+  // 새로 추가된 스키마
+  getTransactions: {
+    params: Joi.object({
+      address: Joi.string().required(),
+    }),
+    query: Joi.object({
+      limit: Joi.number().integer().min(1).max(100).default(20),
+    }),
+  },
+
+  // 계정 관련 스키마
+  createAccount: Joi.object({
+    nickname: Joi.string().min(2).max(50).required(),
+  }),
+
+  sendPaymentFromAccount: Joi.object({
+    toAddress: Joi.string().required(),
+    amount: Joi.number().positive().required(),
+  }),
 };
 
 module.exports = {

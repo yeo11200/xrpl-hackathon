@@ -174,6 +174,214 @@ class XRPLClient {
       throw error;
     }
   }
+
+  /**
+   * XRPL 클라이언트 인스턴스를 가져오는 함수
+   * @returns {Promise<Client>} XRPL 클라이언트 인스턴스
+   */
+  async getXrplClient() {
+    if (this.client && this.client.isConnected()) {
+      return this.client;
+    }
+
+    try {
+      const client = new xrpl.Client(this.serverUrl);
+      await client.connect();
+      this.client = client;
+      this.isConnected = true;
+
+      logger.info("XRPL 클라이언트 연결 성공");
+      return client;
+    } catch (error) {
+      logger.error("XRPL 클라이언트 연결 실패:", error);
+      throw new Error("XRPL 네트워크에 연결할 수 없습니다.");
+    }
+  }
+
+  /**
+   * 클라이언트 연결을 해제하는 함수
+   */
+  async disconnectXrplClient() {
+    if (this.client && this.client.isConnected()) {
+      await this.client.disconnect();
+      this.client = null;
+      this.isConnected = false;
+      logger.info("XRPL 클라이언트 연결 해제");
+    }
+  }
+
+  /**
+   * 계정 정보 조회
+   * @param {string} address 계정 주소
+   * @returns {Promise<Object>} 계정 정보
+   */
+  async getAccountInfo(address) {
+    try {
+      const client = await this.getXrplClient();
+
+      const response = await client.request({
+        command: "account_info",
+        account: address,
+        ledger_index: "validated",
+      });
+
+      logger.info(`계정 정보 조회 성공: ${address}`);
+      return {
+        success: true,
+        account: {
+          address: address,
+          balance: response.result.account_data.Balance,
+          sequence: response.result.account_data.Sequence,
+        },
+      };
+    } catch (error) {
+      logger.error(`계정 정보 조회 실패 (${address}):`, error);
+      return {
+        success: false,
+        message: error.message,
+        account: null,
+      };
+    }
+  }
+
+  /**
+   * XRP 전송
+   * @param {Object} txRequest 트랜잭션 요청
+   * @returns {Promise<Object>} 트랜잭션 결과
+   */
+  async sendPayment(txRequest) {
+    try {
+      const client = await this.getXrplClient();
+      const wallet = xrpl.Wallet.fromSeed(txRequest.secret);
+
+      // 트랜잭션 준비
+      const prepared = await client.autofill({
+        TransactionType: "Payment",
+        Account: txRequest.fromAddress,
+        Amount: xrpl.xrpToDrops(txRequest.amount),
+        Destination: txRequest.toAddress,
+        LastLedgerSequence: (await client.getLedgerIndex()) + 200,
+      });
+
+      // 트랜잭션 서명 및 제출
+      const signed = wallet.sign(prepared);
+      const result = await client.submitAndWait(signed.tx_blob);
+
+      const txResult = result.result;
+      const transactionResult = txResult.meta?.TransactionResult;
+      const isSuccess = transactionResult === "tesSUCCESS";
+
+      logger.info(`XRP 전송 ${isSuccess ? "성공" : "실패"}: ${txResult.hash}`);
+
+      return {
+        success: isSuccess,
+        message: isSuccess
+          ? undefined
+          : `Transaction failed: ${transactionResult}`,
+        transaction: {
+          hash: txResult.hash,
+          amount: txRequest.amount.toString(),
+          fromAddress: txRequest.fromAddress,
+          toAddress: txRequest.toAddress,
+          timestamp: new Date().toISOString(),
+          status: isSuccess ? "success" : "failed",
+        },
+      };
+    } catch (error) {
+      logger.error("XRP 전송 실패:", error);
+      return {
+        success: false,
+        message: error.message,
+        transaction: null,
+      };
+    }
+  }
+
+  /**
+   * 트랜잭션 내역 조회
+   * @param {string} address 계정 주소
+   * @returns {Promise<Object>} 트랜잭션 내역
+   */
+  async getTransactionHistory(address) {
+    try {
+      const client = await this.getXrplClient();
+
+      const response = await client.request({
+        command: "account_tx",
+        account: address,
+        limit: 20,
+      });
+
+      const RIPPLE_EPOCH = 946684800;
+      const transactions = response.result.transactions
+        .filter((tx) => tx.tx)
+        .map((tx) => {
+          const txObj = tx.tx;
+          const meta = tx.meta;
+          const isSuccess = meta?.TransactionResult === "tesSUCCESS";
+
+          const rippleTimestamp = txObj.date || Date.now() / 1000;
+          const unixTimestamp = (rippleTimestamp + RIPPLE_EPOCH) * 1000;
+
+          return {
+            hash: txObj.hash || "",
+            amount: typeof txObj.Amount === "string" ? txObj.Amount : "0",
+            fromAddress: txObj.Account || "",
+            toAddress: txObj.Destination || "",
+            timestamp: new Date(unixTimestamp).toISOString(),
+            status: isSuccess ? "success" : "failed",
+            txType: txObj.TransactionType,
+            fee: txObj.Fee || "0",
+          };
+        });
+
+      logger.info(
+        `트랜잭션 내역 조회 성공: ${address} (${transactions.length}개)`
+      );
+      return {
+        success: true,
+        transactions,
+      };
+    } catch (error) {
+      logger.error(`트랜잭션 내역 조회 실패 (${address}):`, error);
+      return {
+        success: false,
+        message: error.message,
+        transactions: [],
+      };
+    }
+  }
+
+  /**
+   * 지갑 생성 (테스트넷에서 자동 펀딩)
+   * @returns {Promise<Object>} 새 지갑 정보
+   */
+  async createAndFundWallet() {
+    try {
+      const client = await this.getXrplClient();
+      const wallet = await xrpl.Wallet.generate();
+
+      // 테스트넷에서 자동 펀딩
+      const result = await client.fundWallet(wallet);
+
+      logger.info(`새 지갑 생성 및 펀딩 완료: ${wallet.address}`);
+      return {
+        success: true,
+        account: {
+          address: wallet.address,
+          secret: wallet.seed,
+          balance: result.balance.toString(),
+        },
+      };
+    } catch (error) {
+      logger.error("지갑 생성 실패:", error);
+      return {
+        success: false,
+        message: error.message,
+        account: null,
+      };
+    }
+  }
 }
 
 // Singleton instance

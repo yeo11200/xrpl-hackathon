@@ -199,4 +199,25 @@ router.post("/validate-seed", async (req, res, next) => {
   }
 });
 
+// 트랜잭션 내역 조회 (새 스키마 사용)
+router.get(
+  "/account/:address/transactions",
+  validateRequest(schemas.getTransactions), // 새 스키마 적용
+  async (req, res, next) => {
+    try {
+      const { address } = req.params;
+      const { limit = 20 } = req.query;
+
+      // ... 로직 실행 ...
+
+      res.json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 module.exports = router;

@@ -11,6 +11,26 @@ class AccountService {
     this.accounts = new Map(); // 메모리 기반 계정 저장소 (개발용)
   }
 
+  validateAddress(address) {
+    if (!address || typeof address !== "string") {
+      throw new Error("유효한 주소가 필요합니다");
+    }
+    const cleanAddress = address.trim();
+    if (!xrplClient.constructor.isValidAddress(cleanAddress)) {
+      throw new Error("유효한 XRPL 주소 형식이 아닙니다");
+    }
+    return cleanAddress;
+  }
+
+  validateSeed(seed) {
+    try {
+      const wallet = xrplClient.constructor.walletFromSeed(seed);
+      return { isValid: true, address: wallet.address };
+    } catch (error) {
+      return { isValid: false, error: error.message };
+    }
+  }
+
   /**
    * 새 계정 생성 및 테스트넷 펀딩
    * @param {string} nickname - 사용자 닉네임
@@ -20,17 +40,14 @@ class AccountService {
     try {
       logger.info("새 계정 생성 시작...");
 
-      const client = await xrplClient.getClient();
-      if (!client) {
-        throw new Error("XRPL 클라이언트가 초기화되지 않았습니다.");
-      }
 
       // 새 지갑 생성
-      const wallet = xrpl.Wallet.generate();
+
+      const wallet = xrplClient.constructor.generateWallet();
       logger.info(`지갑 생성 완료: ${wallet.address}`);
 
       // 테스트넷에서 계정 펀딩
-      const fundResult = await client.fundWallet(wallet);
+      const fundResult = await xrplClient.fundWallet(wallet);
       logger.info(`계정 펀딩 완료: ${fundResult.balance} XRP`);
 
       const newAccount = {
@@ -54,13 +71,10 @@ class AccountService {
         account: newAccount,
       };
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "알 수 없는 오류";
-      logger.error("계정 생성 실패:", errorMessage);
-
+      logger.error("계정 생성 실패:", error.message);
       return {
         success: false,
-        message: errorMessage,
+        message: error.message,
         account: null,
       };
     }
@@ -73,53 +87,54 @@ class AccountService {
    */
   async getAccountInfo(address) {
     try {
-      const client = await xrplClient.getClient();
-      if (!client) {
-        throw new Error("XRPL 클라이언트가 초기화되지 않았습니다.");
-      }
+      const validAddress = this.validateAddress(address);
 
-      logger.info(`계정 정보 조회 중: ${address}`);
-
-      const response = await client.request({
+      const response = await xrplClient.request({
         command: "account_info",
-        account: address,
+        account: validAddress,
         ledger_index: "validated",
       });
 
+      const accountData = response.result.account_data;
       const accountInfo = {
-        address: address,
-        balance: response.result.account_data.Balance,
-        sequence: response.result.account_data.Sequence,
-        ownerCount: response.result.account_data.OwnerCount,
-        flags: response.result.account_data.Flags,
+        address: validAddress,
+        balance: accountData.Balance,
+        balanceXRP: parseFloat(xrplClient.constructor.dropsToXrp(accountData.Balance)),
+        sequence: accountData.Sequence,
+        ownerCount: accountData.OwnerCount,
+        flags: accountData.Flags,
         updatedAt: new Date().toISOString(),
       };
 
       // 저장된 계정 정보 업데이트
-      const storedAccount = this.accounts.get(address);
+      const storedAccount = this.accounts.get(validAddress);
       if (storedAccount) {
         const updatedAccount = { ...storedAccount, ...accountInfo };
-        this.accounts.set(address, updatedAccount);
+        this.accounts.set(validAddress, updatedAccount);
       }
 
-      logger.info("계정 정보 조회 완료:", {
-        address: address,
-        balance: xrpl.dropsToXrp(accountInfo.balance) + " XRP",
-      });
-
+      logger.info(`계정 정보 조회 완료: ${validAddress}`);
       return {
         success: true,
         account: accountInfo,
       };
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "알 수 없는 오류";
-      logger.error("계정 정보 조회 실패:", errorMessage);
+      if (error.message.includes("actNotFound")) {
+        logger.warn(`존재하지 않는 계정: ${address}`);
+        return {
+          success: false,
+          message: "존재하지 않는 계정입니다",
+          account: null,
+          errorType: "ACCOUNT_NOT_FOUND"
+        };
+      }
 
+      logger.error(`계정 정보 조회 실패 (${address}):`, error);
       return {
         success: false,
-        message: errorMessage,
+        message: error.message,
         account: null,
+        errorType: "QUERY_ERROR"
       };
     }
   }
@@ -135,30 +150,33 @@ class AccountService {
    */
   async sendPayment(txRequest) {
     try {
-      logger.info(
-        "XRP 전송 시작:",
-        `${txRequest.amount} XRP (${txRequest.fromAddress} → ${txRequest.toAddress})`
-      );
+      const validToAddress = this.validateAddress(txRequest.toAddress);
+      const validFromAddress = this.validateAddress(txRequest.fromAddress);
 
-      const client = await xrplClient.getClient();
-      if (!client) {
-        throw new Error("XRPL 클라이언트가 초기화되지 않았습니다.");
+      if (!txRequest.secret) {
+        throw new Error("시드값은 필수입니다");
       }
 
-      const wallet = xrpl.Wallet.fromSeed(txRequest.secret);
+      if (!txRequest.amount || txRequest.amount <= 0) {
+        throw new Error("유효한 송금액이 필요합니다");
+      }
+
+      logger.info(`XRP 전송 시작: ${txRequest.amount} XRP (${validFromAddress} → ${validToAddress})`);
+
+      const wallet = xrplClient.constructor.walletFromSeed(txRequest.secret);
 
       // 트랜잭션 준비
-      const prepared = await client.autofill({
+      const prepared = await xrplClient.autofill({
         TransactionType: "Payment",
-        Account: txRequest.fromAddress,
-        Amount: xrpl.xrpToDrops(txRequest.amount),
-        Destination: txRequest.toAddress,
-        LastLedgerSequence: (await client.getLedgerIndex()) + 200,
+        Account: validFromAddress,
+        Amount: xrplClient.constructor.xrpToDrops(txRequest.amount),
+        Destination: validToAddress,
+        LastLedgerSequence: (await xrplClient.getLedgerIndex()) + 200,
       });
 
       // 트랜잭션 서명 및 제출
       const signed = wallet.sign(prepared);
-      const result = await client.submitAndWait(signed.tx_blob);
+      const result = await xrplClient.submitAndWait(signed.tx_blob);
 
       const txResult = result.result;
       const transactionResult = txResult.meta?.TransactionResult;
@@ -168,14 +186,12 @@ class AccountService {
 
       return {
         success: isSuccess,
-        message: isSuccess
-          ? undefined
-          : `Transaction failed: ${transactionResult}`,
+        message: isSuccess ? undefined : `트랜잭션 실패: ${transactionResult}`,
         transaction: {
           hash: txResult.hash,
           amount: txRequest.amount.toString(),
-          fromAddress: txRequest.fromAddress,
-          toAddress: txRequest.toAddress,
+          fromAddress: validFromAddress,
+          toAddress: validToAddress,
           timestamp: new Date().toISOString(),
           status: isSuccess ? "success" : "failed",
         },
@@ -198,14 +214,11 @@ class AccountService {
    */
   async getTransactionHistory(address, limit = 20) {
     try {
-      const client = await xrplClient.getClient();
-      if (!client) {
-        throw new Error("XRPL 클라이언트가 초기화되지 않았습니다.");
-      }
+      const validAddress = this.validateAddress(address);
 
-      const response = await client.request({
+      const response = await xrplClient.request({
         command: "account_tx",
-        account: address,
+        account: validAddress,
         limit: limit,
       });
 
@@ -222,19 +235,19 @@ class AccountService {
 
           return {
             hash: txObj.hash || "",
-            amount: typeof txObj.Amount === "string" ? txObj.Amount : "0",
+            amount: typeof txObj.Amount === "string" 
+              ? xrplClient.constructor.dropsToXrp(txObj.Amount) 
+              : "0",
             fromAddress: txObj.Account || "",
             toAddress: txObj.Destination || "",
             timestamp: new Date(unixTimestamp).toISOString(),
             status: isSuccess ? "success" : "failed",
             txType: txObj.TransactionType,
-            fee: txObj.Fee || "0",
+            fee: xrplClient.constructor.dropsToXrp(txObj.Fee || "0"),
           };
         });
 
-      logger.info(
-        `트랜잭션 내역 조회 성공: ${address} (${transactions.length}개)`
-      );
+      logger.info(`트랜잭션 내역 조회 성공: ${validAddress} (${transactions.length}개)`);
       return {
         success: true,
         transactions,
@@ -278,42 +291,6 @@ class AccountService {
     }
     return deleted;
   }
-
-  /**
-   * 주소 유효성 검증
-   * @param {string} address - 검증할 주소
-   * @returns {boolean} 유효성 여부
-   */
-  validateAddress(address) {
-    try {
-      return xrpl.isValidClassicAddress(address);
-    } catch (error) {
-      return false;
-    }
-  }
-
-  /**
-   * 시드 유효성 검증
-   * @param {string} seed - 검증할 시드
-   * @returns {Object} 검증 결과
-   */
-  validateSeed(seed) {
-    try {
-      const wallet = xrpl.Wallet.fromSeed(seed);
-      return {
-        isValid: true,
-        address: wallet.address,
-      };
-    } catch (error) {
-      return {
-        isValid: false,
-        error: error.message,
-      };
-    }
-  }
 }
 
-// 싱글톤 인스턴스
-const accountService = new AccountService();
-
-module.exports = accountService;
+module.exports = new AccountService();

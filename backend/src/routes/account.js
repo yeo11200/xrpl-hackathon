@@ -6,8 +6,7 @@ const logger = require("../utils/logger");
 const router = express.Router();
 
 // 새 계정 생성
-router.post(
-  "/create",
+router.post("/create", 
   validateRequest(schemas.createAccount),
   async (req, res, next) => {
     try {
@@ -53,70 +52,8 @@ router.get("/:address", async (req, res, next) => {
   }
 });
 
-// 저장된 계정 정보 조회
-router.get("/:address/stored", async (req, res, next) => {
-  try {
-    const { address } = req.params;
-    const account = accountService.getStoredAccount(address);
-
-    if (account) {
-      res.json({
-        success: true,
-        data: account,
-      });
-    } else {
-      res.status(404).json({
-        success: false,
-        error: "Account not found in storage",
-      });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-
-// 모든 저장된 계정 목록 조회
-router.get("/", async (req, res, next) => {
-  try {
-    const accounts = accountService.getAllStoredAccounts();
-
-    res.json({
-      success: true,
-      data: {
-        accounts,
-        count: accounts.length,
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// 계정 삭제
-router.delete("/:address", async (req, res, next) => {
-  try {
-    const { address } = req.params;
-    const deleted = accountService.deleteAccount(address);
-
-    if (deleted) {
-      res.json({
-        success: true,
-        message: "Account deleted successfully",
-      });
-    } else {
-      res.status(404).json({
-        success: false,
-        error: "Account not found",
-      });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-
-// XRP 전송 (계정 서비스를 통해)
-router.post(
-  "/:address/send",
+// XRP 전송
+router.post("/:address/send",
   validateRequest(schemas.sendPaymentFromAccount),
   async (req, res, next) => {
     try {
@@ -184,6 +121,22 @@ router.get("/:address/transactions", async (req, res, next) => {
         error: result.message,
       });
     }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// 모든 저장된 계정 조회
+router.get("/", async (req, res, next) => {
+  try {
+    const accounts = accountService.getAllStoredAccounts();
+    res.json({
+      success: true,
+      data: {
+        accounts,
+        count: accounts.length,
+      },
+    });
   } catch (error) {
     next(error);
   }

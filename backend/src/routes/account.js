@@ -212,6 +212,61 @@ router.get("/:address", async (req, res, next) => {
     next(error);
   }
 });
+/**
+ * @swagger
+ * /api/account/balance/{address}:
+ *   get:
+ *     summary: XRPL 계정 잔액 조회
+ *     tags: [Account]
+ *     parameters:
+ *       - in: path
+ *         name: address
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: XRP Ledger 주소
+ *     responses:
+ *       200:
+ *         description: 잔액 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     address:
+ *                       type: string
+ *                       example: "rXXXXXXXXXXXXXXXXXXXX"
+ *                     balance:
+ *                       type: number
+ *                       example: 12.5
+ *                 message:
+ *                   type: string
+ *                   example: "잔액 조회 성공"
+ *       400:
+ *         description: 잘못된 요청
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "유효하지 않은 주소입니다"
+ */
+router.get("/balance/:address", async (req, res) => {
+  const { address } = req.params;
+  const result = await accountService.getBalance(address);
+  res.status(result.success ? 200 : 400).json(result);
+});
 
 // XRP 전송
 /**

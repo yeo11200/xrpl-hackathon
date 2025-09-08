@@ -140,6 +140,33 @@ class AccountService {
       };
     }
   }
+/**
+ * XRP 잔액만 조회
+ * @param {string} address - XRPL 주소
+ * @returns {Promise<Object>} 잔액 조회 결과
+ */
+async getBalance(address) {
+  try {
+    const validAddress = this.validateAddress(address);
+    const balance = await xrplClient.getXrpBalance(validAddress);
+
+    return {
+      success: true,
+      data: {
+        address: validAddress,
+        balance
+      },
+      message: "잔액 조회 성공"
+    };
+  } catch (error) {
+    logger.error(`잔액 조회 실패 (${address}):`, error);
+    return {
+      success: false,
+      message: error.message,
+      data: null
+    };
+  }
+}
 
   /**
    * XRP 전송

@@ -1,7 +1,7 @@
 const logger = require("../utils/logger");
 
 const errorHandler = (err, req, res, next) => {
-  logger.error("Error occurred:", {
+  logger.error("에러 발생:", {
     error: err.message,
     stack: err.stack,
     url: req.url,
@@ -9,45 +9,51 @@ const errorHandler = (err, req, res, next) => {
     ip: req.ip,
   });
 
-  // XRPL specific errors
-  if (err.message.includes("XRPL")) {
+  // XRPL 관련 에러
+  if (err.message.includes("XRPL") || err.message.includes("연결")) {
     return res.status(503).json({
+      success: false,
       error: "XRPL Service Error",
-      message: err.message,
+      message: "XRPL 네트워크 연결에 문제가 있습니다",
       timestamp: new Date().toISOString(),
     });
   }
 
-  // Validation errors
+  // 검증 에러 (Joi)
   if (err.isJoi) {
     return res.status(400).json({
+      success: false,
       error: "Validation Error",
       message: err.details[0].message,
       timestamp: new Date().toISOString(),
     });
   }
 
-  // Payment specific errors
+  // 결제/지갑 관련 에러
   if (
-    err.message.includes("Payment") ||
-    err.message.includes("balance") ||
-    err.message.includes("wallet")
+    err.message.includes("잔액") ||
+    err.message.includes("지갑") ||
+    err.message.includes("송금") ||
+    err.message.includes("계정")
   ) {
     return res.status(400).json({
+      success: false,
       error: "Payment Error",
       message: err.message,
       timestamp: new Date().toISOString(),
     });
   }
 
-  // Default error
+  // 기본 에러
   const statusCode = err.statusCode || 500;
-  const message = err.message || "Internal Server Error";
+  const message = process.env.NODE_ENV === "production" 
+    ? "서버 내부 오류가 발생했습니다" 
+    : err.message;
 
   res.status(statusCode).json({
+    success: false,
     error: "Server Error",
-    message:
-      process.env.NODE_ENV === "production" ? "Something went wrong" : message,
+    message,
     timestamp: new Date().toISOString(),
   });
 };

@@ -7,6 +7,7 @@ require("dotenv").config();
 const logger = require("./utils/logger");
 const xrplRoutes = require("./routes/xrpl");
 const paymentRoutes = require("./routes/payment");
+const accountRoutes = require("./routes/account");
 const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
@@ -58,6 +59,7 @@ app.get("/health", (req, res) => {
 // API routes
 app.use("/api/xrpl", xrplRoutes);
 app.use("/api/payment", paymentRoutes);
+app.use("/api/account", accountRoutes);
 
 // 404 handler
 app.use("*", (req, res) => {

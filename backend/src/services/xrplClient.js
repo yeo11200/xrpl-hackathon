@@ -10,39 +10,43 @@ class XRPLClient {
     this.network = process.env.XRPL_NETWORK || "testnet";
   }
 
+  // 연결 관리
+  // 명시적 연결 메서드 (기존과 호환성 유지)
   async connect() {
-    try {
       if (this.isConnected) {
-        logger.info("XRPL client already connected");
+        logger.info("XRPL 클라이언트가 이미 연결되어 있습니다");
         return this.client;
       }
 
-      logger.info(`Connecting to XRPL server: ${this.serverUrl}`);
+    try {
+      logger.info(`XRPL 서버에 연결 중: ${this.serverUrl}`);
       this.client = new xrpl.Client(this.serverUrl);
       await this.client.connect();
       this.isConnected = true;
 
-      logger.info("✅ Successfully connected to XRPL");
+      logger.info("✅ XRPL 클라이언트 연결 성공");
       return this.client;
     } catch (error) {
-      logger.error("Failed to connect to XRPL:", error);
-      throw new Error(`XRPL connection failed: ${error.message}`);
+      logger.error("XRPL 클라이언트 연결 실패:", error);
+      throw new Error(`XRPL 네트워크에 연결할 수 없습니다: ${error.message}`);
     }
   }
 
+  // 연결 해제
   async disconnect() {
     try {
       if (this.client && this.isConnected) {
         await this.client.disconnect();
         this.isConnected = false;
         this.client = null;
-        logger.info("Disconnected from XRPL");
+        logger.info("XRPL 클라이언트 연결 해제");
       }
     } catch (error) {
-      logger.error("Error disconnecting from XRPL:", error);
+      logger.error("XRPL 연결 해제 중 오류:", error);
     }
   }
 
+  // 클라이언트 가져오기 (자동 연결 포함)
   async getClient() {
     if (!this.isConnected) {
       await this.connect();
@@ -50,133 +54,94 @@ class XRPLClient {
     return this.client;
   }
 
-  async getAccountInfo(address) {
+  // 기본 XRPL API
+  async request(command) {
     try {
       const client = await this.getClient();
-      const response = await client.request({
-        command: "account_info",
-        account: address,
-        ledger_index: "validated",
-      });
-
-      logger.info(`Account info retrieved for ${address}`);
-      return response.result.account_data;
+      return await client.request(command);
     } catch (error) {
-      logger.error(`Failed to get account info for ${address}:`, error);
+      logger.error("XRPL 요청 실패:", error);
       throw error;
     }
   }
 
-  async getAccountBalance(address) {
+  async submitAndWait(txBlob) {
     try {
       const client = await this.getClient();
-      const response = await client.getXrpBalance(address);
-
-      logger.info(`Balance retrieved for ${address}: ${response} XRP`);
-      return response;
+      return await client.submitAndWait(txBlob);
     } catch (error) {
-      logger.error(`Failed to get balance for ${address}:`, error);
+      logger.error("트랜잭션 전송 실패:", error);
       throw error;
     }
   }
 
-  async createWallet() {
+  async fundWallet(wallet = null) {
+    if (this.network !== "testnet") {
+      throw new Error("펀딩은 테스트넷에서만 가능합니다");
+    }
     try {
       const client = await this.getClient();
-      const wallet = xrpl.Wallet.generate();
-
-      logger.info(`New wallet created: ${wallet.address}`);
-      return {
-        address: wallet.address,
-        seed: wallet.seed,
-        publicKey: wallet.publicKey,
-        privateKey: wallet.privateKey,
-      };
+      return await client.fundWallet(wallet, { faucetHost: null });
     } catch (error) {
-      logger.error("Failed to create wallet:", error);
+      logger.error("지갑 펀딩 실패:", error);
       throw error;
     }
   }
 
-  async fundWallet(address, amount = "1000") {
+  async getXrpBalance(address) {
     try {
       const client = await this.getClient();
-
-      // Only fund on testnet
-      if (this.network === "testnet") {
-        const fundResponse = await client.fundWallet();
-        logger.info(`Wallet funded: ${address}`);
-        return fundResponse;
-      } else {
-        logger.warn("Wallet funding only available on testnet");
-        return { message: "Funding only available on testnet" };
-      }
+      return await client.getXrpBalance(address);
     } catch (error) {
-      logger.error(`Failed to fund wallet ${address}:`, error);
+      logger.error(`잔액 조회 실패 (${address}):`, error);
       throw error;
     }
   }
 
-  async sendPayment(fromWallet, toAddress, amount) {
+  async autofill(transaction) {
     try {
       const client = await this.getClient();
-
-      const prepared = await client.autofill({
-        TransactionType: "Payment",
-        Account: fromWallet.address,
-        Amount: xrpl.xrpToDrops(amount),
-        Destination: toAddress,
-      });
-
-      const signed = fromWallet.sign(prepared);
-      const result = await client.submitAndWait(signed.tx_blob);
-
-      logger.info(
-        `Payment sent: ${amount} XRP from ${fromWallet.address} to ${toAddress}`
-      );
-      return {
-        hash: result.result.hash,
-        validated: result.result.validated,
-        meta: result.result.meta,
-      };
+      return await client.autofill(transaction);
     } catch (error) {
-      logger.error("Payment failed:", error);
+      logger.error("트랜잭션 autofill 실패:", error);
       throw error;
     }
   }
 
-  async getTransaction(hash) {
+  async getLedgerIndex() {
     try {
-      const client = await this.getClient();
-      const response = await client.request({
-        command: "tx",
-        transaction: hash,
-      });
-
-      logger.info(`Transaction retrieved: ${hash}`);
-      return response.result;
+      const response = await this.request({ command: "ledger_current" });
+      return response.result.ledger_current_index;
     } catch (error) {
-      logger.error(`Failed to get transaction ${hash}:`, error);
+      logger.error("Ledger 인덱스 조회 실패:", error);
       throw error;
     }
   }
 
-  async getServerInfo() {
+  // Static 유틸리티
+  static isValidAddress(address) {
     try {
-      const client = await this.getClient();
-      const response = await client.request({
-        command: "server_info",
-      });
-
-      return response.result.info;
-    } catch (error) {
-      logger.error("Failed to get server info:", error);
-      throw error;
+      return xrpl.isValidClassicAddress(address);
+    } catch {
+      return false;
     }
+  }
+
+  static xrpToDrops(xrp) {
+    return xrpl.xrpToDrops(xrp);
+  }
+
+  static dropsToXrp(drops) {
+    return xrpl.dropsToXrp(drops);
+  }
+
+  static generateWallet() {
+    return xrpl.Wallet.generate();
+  }
+
+  static walletFromSeed(seed) {
+    return xrpl.Wallet.fromSeed(seed);
   }
 }
 
-// Singleton instance
-const xrplClient = new XRPLClient();
-
-module.exports = xrplClient;
+module.exports = new XRPLClient();

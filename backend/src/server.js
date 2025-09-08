@@ -8,6 +8,7 @@ const logger = require("./utils/logger");
 const xrplRoutes = require("./routes/xrpl");
 const paymentRoutes = require("./routes/payment");
 const accountRoutes = require("./routes/account");
+const shopRoutes = require("./routes/shop");
 const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
@@ -60,6 +61,7 @@ app.get("/health", (req, res) => {
 app.use("/api/xrpl", xrplRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/account", accountRoutes);
+app.use("/api/shop", shopRoutes);
 
 // 404 handler
 app.use("*", (req, res) => {
@@ -91,3 +93,4 @@ process.on("SIGINT", () => {
 });
 
 module.exports = app;
+

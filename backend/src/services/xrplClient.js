@@ -91,7 +91,14 @@ class XRPLClient {
   async getXrpBalance(address) {
     try {
       const client = await this.getClient();
-      return await client.getXrpBalance(address);
+      const response = await client.request({
+        command: "account_info",
+        account: address,
+        ledger_index: "validated"
+      });
+
+    const drops = response.result.account_data.Balance;
+    return xrpl.dropsToXrp(drops); // XRP 단위로 변환
     } catch (error) {
       logger.error(`잔액 조회 실패 (${address}):`, error);
       throw error;

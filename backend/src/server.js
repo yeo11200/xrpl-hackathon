@@ -2,16 +2,40 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
+const swaggerJsdoc = require("swagger-jsdoc");
+const swaggerUi = require("swagger-ui-express");
 require("dotenv").config();
 
 const logger = require("./utils/logger");
 const xrplRoutes = require("./routes/xrpl");
 const paymentRoutes = require("./routes/payment");
 const accountRoutes = require("./routes/account");
+const shopRoutes = require("./routes/shop");
 const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Swagger 설정
+const swaggerOptions = {
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "XRPL Hackathon API",
+      version: "1.0.0",
+      description: "XRPL 기반 해커톤 프로젝트 API 문서",
+    },
+    servers: [
+      {
+        url: `http://localhost:${PORT}`,
+        description: "개발 서버"
+      }
+    ],
+  },
+  apis: ["./src/routes/*.js"], // API 문서가 있는 파일들
+};
+
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
 // Security middleware
 app.use(helmet());
@@ -46,6 +70,9 @@ app.use((req, res, next) => {
   next();
 });
 
+// Swagger UI 설정
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 // Health check endpoint
 app.get("/health", (req, res) => {
   res.status(200).json({
@@ -60,6 +87,7 @@ app.get("/health", (req, res) => {
 app.use("/api/xrpl", xrplRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/account", accountRoutes);
+app.use("/api/shop", shopRoutes);
 
 // 404 handler
 app.use("*", (req, res) => {
@@ -77,6 +105,7 @@ app.listen(PORT, () => {
   logger.info(`🚀 XRPL Payment Server running on port ${PORT}`);
   logger.info(`📊 Environment: ${process.env.NODE_ENV}`);
   logger.info(`🔗 Health check: http://localhost:${PORT}/health`);
+  logger.info(`📚 API 문서: http://localhost:${PORT}/api-docs`);
 });
 
 // Graceful shutdown
@@ -91,3 +120,4 @@ process.on("SIGINT", () => {
 });
 
 module.exports = app;
+

@@ -55,7 +55,7 @@ class AccountService {
         secret: wallet.seed,
         publicKey: wallet.publicKey,
         privateKey: wallet.privateKey,
-        balance: fundResult.balance.toString(),
+        balance: fundResult.balance,
         userId: nickname,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -98,11 +98,11 @@ class AccountService {
       const accountData = response.result.account_data;
       const accountInfo = {
         address: validAddress,
-        balance: accountData.Balance,
-        balanceXRP: parseFloat(xrplClient.constructor.dropsToXrp(accountData.Balance)),
-        sequence: accountData.Sequence,
-        ownerCount: accountData.OwnerCount,
-        flags: accountData.Flags,
+        balance: parseFloat(xrplClient.constructor.dropsToXrp(accountData.Balance)),
+        //balanceXRP: parseFloat(xrplClient.constructor.dropsToXrp(accountData.Balance)),
+        //sequence: accountData.Sequence,
+        //ownerCount: accountData.OwnerCount,
+        //flags: accountData.Flags,
         updatedAt: new Date().toISOString(),
       };
 
@@ -113,10 +113,12 @@ class AccountService {
         this.accounts.set(validAddress, updatedAccount);
       }
 
+      const returnAccount = this.accounts.get(validAddress);
+
       logger.info(`계정 정보 조회 완료: ${validAddress}`);
       return {
         success: true,
-        account: accountInfo,
+        account: returnAccount,
       };
     } catch (error) {
       if (error.message.includes("actNotFound")) {
@@ -183,13 +185,14 @@ class AccountService {
       const isSuccess = transactionResult === "tesSUCCESS";
 
       logger.info(`XRP 전송 ${isSuccess ? "성공" : "실패"}: ${txResult.hash}`);
-
+      this.getAccountInfo(txRequest.toAddress);
+      this.getAccountInfo(txRequest.fromAddress);
       return {
         success: isSuccess,
         message: isSuccess ? undefined : `트랜잭션 실패: ${transactionResult}`,
         transaction: {
           hash: txResult.hash,
-          amount: txRequest.amount.toString(),
+          amount: txRequest.amount,
           fromAddress: validFromAddress,
           toAddress: validToAddress,
           timestamp: new Date().toISOString(),
@@ -236,14 +239,14 @@ class AccountService {
           return {
             hash: txObj.hash || "",
             amount: typeof txObj.Amount === "string" 
-              ? xrplClient.constructor.dropsToXrp(txObj.Amount) 
-              : "0",
+              ? parseFloat(xrplClient.constructor.dropsToXrp(txObj.Amount)) 
+              : 0,
             fromAddress: txObj.Account || "",
             toAddress: txObj.Destination || "",
             timestamp: new Date(unixTimestamp).toISOString(),
             status: isSuccess ? "success" : "failed",
             txType: txObj.TransactionType,
-            fee: xrplClient.constructor.dropsToXrp(txObj.Fee || "0"),
+            fee: parseFloat(xrplClient.constructor.dropsToXrp(txObj.Fee || 0)),
           };
         });
 

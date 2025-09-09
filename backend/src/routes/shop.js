@@ -110,6 +110,35 @@ const orders = new Map();
  * @desc 상품 목록 조회
  * @access Public
  */
+/**
+ * @api {get} /api/shop/products 01. 상품 목록 조회
+ * @apiName GetProducts
+ * @apiGroup Shop
+ * @apiDescription 카테고리/검색/페이지네이션으로 상품 목록을 조회합니다. XRP 시세를 반영해 KRW→XRP 가격을 포함합니다.
+ *
+ * @apiParam {String} [category=all] 카테고리 (query)
+ * @apiParam {String} [search] 검색어 (query)
+ * @apiParam {Number} [page=1] 페이지 번호 (query)
+ * @apiParam {Number} [limit=10] 페이지 당 개수 (query)
+ *
+ * @apiSuccess {Boolean} success 요청 성공 여부
+ * @apiSuccess {Object[]} products 상품 목록
+ * @apiSuccess {Number} products.id 상품 ID
+ * @apiSuccess {String} products.name 상품명
+ * @apiSuccess {String} products.description 설명
+ * @apiSuccess {String} products.category 카테고리
+ * @apiSuccess {Number} products.priceKRW 가격(KRW)
+ * @apiSuccess {String} products.priceXRP 가격(XRP, 소수 6자리 문자열)
+ * @apiSuccess {String} [products.image] 이미지 URL
+ * @apiSuccess {Number} [products.stock] 재고
+ * @apiSuccess {Object} pagination 페이지네이션 정보
+ * @apiSuccess {Number} pagination.currentPage 현재 페이지
+ * @apiSuccess {Number} pagination.totalPages 전체 페이지 수
+ * @apiSuccess {Number} pagination.totalProducts 전체 상품 수
+ * @apiSuccess {Boolean} pagination.hasNext 다음 페이지 여부
+ * @apiSuccess {Boolean} pagination.hasPrev 이전 페이지 여부
+ * @apiSuccess {String[]} categories 사용 가능한 카테고리 목록
+ */
 router.get("/products", async (req, res) => {
   try {
     const { category, search, page = 1, limit = 10 } = req.query;
@@ -179,9 +208,24 @@ router.get("/products", async (req, res) => {
 });
 
 /**
- * @route GET /api/shop/products/:id
- * @desc 특정 상품 상세 조회
- * @access Public
+ * @api {get} /api/shop/products/:id 02. 상품 상세 조회
+ * @apiName GetProductDetail
+ * @apiGroup Shop
+ * @apiDescription 특정 상품의 상세 정보를 조회합니다. XRP 시세 기준 가격을 포함합니다.
+ *
+ * @apiParam {Number} id 상품 ID (URL path parameter)
+ *
+ * @apiSuccess {Boolean} success 요청 성공 여부
+ * @apiSuccess {Object} product 상품 정보
+ * @apiSuccess {Number} product.id 상품 ID
+ * @apiSuccess {String} product.name 상품명
+ * @apiSuccess {String} product.description 설명
+ * @apiSuccess {String} product.category 카테고리
+ * @apiSuccess {Number} product.priceKRW 가격(KRW)
+ * @apiSuccess {String} product.priceXRP 가격(XRP, 소수 6자리 문자열)
+ * @apiSuccess {String} [product.image] 이미지 URL
+ * @apiSuccess {Number} [product.stock] 재고
+ * @apiSuccess {Object} [product.xrpPriceInfo] XRP 시세 정보
  */
 router.get("/products/:id", async (req, res) => {
   try {
@@ -223,9 +267,26 @@ router.get("/products/:id", async (req, res) => {
 });
 
 /**
- * @route POST /api/shop/cart/add
- * @desc 장바구니에 상품 추가
- * @access Public
+ * @api {post} /api/shop/cart/add 03. 장바구니에 상품 추가
+ * @apiName AddToCart
+ * @apiGroup Shop
+ * @apiDescription 세션 장바구니에 상품을 추가합니다.
+ *
+ * @apiBody {String} sessionId 세션 ID
+ * @apiBody {Number} productId 상품 ID
+ * @apiBody {Number} [quantity=1] 수량
+ *
+ * @apiSuccess {Boolean} success 요청 성공 여부
+ * @apiSuccess {String} message 결과 메시지
+ * @apiSuccess {Object} cart 장바구니 정보
+ * @apiSuccess {Object[]} cart.items 장바구니 항목
+ * @apiSuccess {Number} cart.items.productId 상품 ID
+ * @apiSuccess {String} cart.items.name 상품명
+ * @apiSuccess {Number} cart.items.price 가격(KRW)
+ * @apiSuccess {Number} cart.items.quantity 수량
+ * @apiSuccess {String} [cart.items.image] 이미지 URL
+ * @apiSuccess {String} cart.createdAt 생성 시각
+ * @apiSuccess {String} cart.updatedAt 갱신 시각
  */
 router.post("/cart/add", (req, res) => {
   try {
@@ -293,9 +354,21 @@ router.post("/cart/add", (req, res) => {
 });
 
 /**
- * @route GET /api/shop/cart/:sessionId
- * @desc 장바구니 조회
- * @access Public
+ * @api {get} /api/shop/cart/:sessionId 04. 장바구니 조회
+ * @apiName GetCart
+ * @apiGroup Shop
+ * @apiDescription 세션 장바구니 정보를 조회합니다. 총액의 KRW/XRP 변환 정보를 포함합니다.
+ *
+ * @apiParam {String} sessionId 세션 ID
+ *
+ * @apiSuccess {Boolean} success 요청 성공 여부
+ * @apiSuccess {Object} cart 장바구니 정보
+ * @apiSuccess {Object[]} cart.items 항목 배열
+ * @apiSuccess {Number} cart.totalItems 총 수량
+ * @apiSuccess {Number} cart.totalAmountKRW 총액(KRW)
+ * @apiSuccess {String} cart.totalAmountXRP 총액(XRP, 문자열)
+ * @apiSuccess {Number} cart.xrpPrice 사용된 XRP 가격(KRW)
+ * @apiSuccess {Object} [cart.xrpPriceInfo] XRP 시세 정보
  */
 router.get("/cart/:sessionId", async (req, res) => {
   try {
@@ -352,9 +425,17 @@ router.get("/cart/:sessionId", async (req, res) => {
 });
 
 /**
- * @route DELETE /api/shop/cart/:sessionId/item/:productId
- * @desc 장바구니에서 상품 제거
- * @access Public
+ * @api {delete} /api/shop/cart/:sessionId/item/:productId 05. 장바구니 상품 제거
+ * @apiName RemoveCartItem
+ * @apiGroup Shop
+ * @apiDescription 세션 장바구니에서 특정 상품을 제거합니다.
+ *
+ * @apiParam {String} sessionId 세션 ID
+ * @apiParam {Number} productId 상품 ID
+ *
+ * @apiSuccess {Boolean} success 요청 성공 여부
+ * @apiSuccess {String} message 결과 메시지
+ * @apiSuccess {Object} cart 장바구니 정보
  */
 router.delete("/cart/:sessionId/item/:productId", (req, res) => {
   try {
@@ -389,9 +470,26 @@ router.delete("/cart/:sessionId/item/:productId", (req, res) => {
 });
 
 /**
- * @route POST /api/shop/order/create
- * @desc 주문 생성
- * @access Public
+ * @api {post} /api/shop/order/create 06. 주문 생성
+ * @apiName CreateOrder
+ * @apiGroup Shop
+ * @apiDescription 장바구니 기반으로 주문을 생성합니다. 총액 KRW/XRP 및 당시 XRP 시세 정보를 포함합니다.
+ *
+ * @apiBody {String} sessionId 세션 ID
+ * @apiBody {String} customerAddress 고객 XRPL 주소
+ * @apiBody {String} [customerName] 고객 이름
+ * @apiBody {String} [customerEmail] 고객 이메일
+ *
+ * @apiSuccess {Boolean} success 요청 성공 여부
+ * @apiSuccess {String} message 결과 메시지
+ * @apiSuccess {Object} order 주문 요약
+ * @apiSuccess {String} order.id 주문 ID
+ * @apiSuccess {Number} order.totalAmountKRW 총액(KRW)
+ * @apiSuccess {Number} order.totalAmountXRP 총액(XRP)
+ * @apiSuccess {Number} order.xrpPrice 주문 시 XRP 가격(KRW)
+ * @apiSuccess {Object} [order.xrpPriceInfo] 주문 시 XRP 시세 정보
+ * @apiSuccess {String} order.status 주문 상태
+ * @apiSuccess {String} order.createdAt 생성 시각
  */
 router.post("/order/create", async (req, res) => {
   try {
@@ -499,9 +597,26 @@ router.post("/order/create", async (req, res) => {
 });
 
 /**
- * @route POST /api/shop/order/:orderId/pay
- * @desc 주문 결제 처리
- * @access Public
+ * @api {post} /api/shop/order/:orderId/pay 07. 주문 결제 처리
+ * @apiName PayOrder
+ * @apiGroup Shop
+ * @apiDescription 주문 금액(XRP)으로 결제를 수행합니다. 내부적으로 결제 요청을 생성/처리합니다.
+ *
+ * @apiParam {String} orderId 주문 ID
+ * @apiBody {String} customerWalletSeed 고객 지갑 시드
+ * @apiBody {String} customerAddress 고객 XRPL 주소
+ *
+ * @apiSuccess {Boolean} success 요청 성공 여부
+ * @apiSuccess {String} message 결과 메시지
+ * @apiSuccess {Object} order 주문 결제 결과 요약
+ * @apiSuccess {String} order.id 주문 ID
+ * @apiSuccess {String} order.status 주문 상태(paid)
+ * @apiSuccess {String} order.paymentHash 결제 트랜잭션 해시
+ * @apiSuccess {String} order.paymentId 결제 요청 ID
+ * @apiSuccess {Number} order.totalAmountKRW 주문 총액(KRW)
+ * @apiSuccess {Number} order.paidAmountXRP 결제 금액(XRP)
+ * @apiSuccess {Number} order.xrpPrice 결제 시점 XRP 가격(KRW)
+ * @apiSuccess {String} order.paidAt 결제 완료 시각
  */
 router.post("/order/:orderId/pay", async (req, res) => {
   try {
@@ -582,9 +697,15 @@ router.post("/order/:orderId/pay", async (req, res) => {
 });
 
 /**
- * @route GET /api/shop/order/:orderId
- * @desc 주문 상세 조회
- * @access Public
+ * @api {get} /api/shop/order/:orderId 08. 주문 상세 조회
+ * @apiName GetOrderDetail
+ * @apiGroup Shop
+ * @apiDescription 주문 상세 정보를 조회합니다. 주문 생성 시의 XRP/KRW 가격 정보 포함.
+ *
+ * @apiParam {String} orderId 주문 ID
+ *
+ * @apiSuccess {Boolean} success 요청 성공 여부
+ * @apiSuccess {Object} order 주문 전체 정보
  */
 router.get("/order/:orderId", async (req, res) => {
   try {
@@ -616,9 +737,18 @@ router.get("/order/:orderId", async (req, res) => {
 });
 
 /**
- * @route GET /api/shop/orders/:address
- * @desc 특정 주소의 주문 내역 조회
- * @access Public
+ * @api {get} /api/shop/orders/:address 09. 주소별 주문 내역 조회
+ * @apiName GetOrdersByAddress
+ * @apiGroup Shop
+ * @apiDescription 고객 주소 기준 주문 내역을 페이지네이션으로 조회합니다.
+ *
+ * @apiParam {String} address 고객 XRPL 주소
+ * @apiParam {Number} [page=1] 페이지 번호 (query)
+ * @apiParam {Number} [limit=10] 페이지 당 개수 (query)
+ *
+ * @apiSuccess {Boolean} success 요청 성공 여부
+ * @apiSuccess {Object[]} orders 주문 목록 (최신순)
+ * @apiSuccess {Object} pagination 페이지네이션 정보
  */
 router.get("/orders/:address", async (req, res) => {
   try {
@@ -659,9 +789,19 @@ router.get("/orders/:address", async (req, res) => {
 });
 
 /**
- * @route GET /api/shop/stats
- * @desc 쇼핑몰 통계 정보
- * @access Public
+ * @api {get} /api/shop/stats 10. 쇼핑몰 통계 정보
+ * @apiName GetShopStats
+ * @apiGroup Shop
+ * @apiDescription 상품/주문/매출 등 기본 통계와 현재 XRP 시세 정보를 조회합니다.
+ *
+ * @apiSuccess {Boolean} success 요청 성공 여부
+ * @apiSuccess {Object} stats 통계 정보
+ * @apiSuccess {Number} stats.totalProducts 총 상품 수
+ * @apiSuccess {Number} stats.totalOrders 총 주문 수
+ * @apiSuccess {Number} stats.totalRevenueKRW 총 매출(KRW)
+ * @apiSuccess {Number} stats.totalRevenueXRP 총 매출(XRP)
+ * @apiSuccess {String[]} stats.categories 카테고리 목록
+ * @apiSuccess {Object} [stats.currentXrpPriceInfo] 현재 XRP 시세 정보
  */
 router.get("/stats", async (req, res) => {
   try {

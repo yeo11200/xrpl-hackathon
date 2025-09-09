@@ -62,10 +62,11 @@ class XRPLClient {
     }
   }
 
-  async submitAndWait(txBlob) {
+  async submitAndWait(txBlob, options = undefined) {
     try {
       const client = await this.getClient();
-      return await client.submitAndWait(txBlob);
+      // options 예: { wallet }
+      return await client.submitAndWait(txBlob, options);
     } catch (error) {
       logger.error("트랜잭션 전송 실패:", error);
       throw error;

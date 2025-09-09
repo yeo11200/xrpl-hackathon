@@ -1,9 +1,8 @@
 const express = require("express");
+const path = require("path");
 const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
-const swaggerJsdoc = require("swagger-jsdoc");
-const swaggerUi = require("swagger-ui-express");
 require("dotenv").config();
 
 const logger = require("./utils/logger");
@@ -16,29 +15,18 @@ const errorHandler = require("./middleware/errorHandler");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Swagger 설정
-const swaggerOptions = {
-  definition: {
-    openapi: "3.0.0",
-    info: {
-      title: "XRPL Hackathon API",
-      version: "1.0.0",
-      description: "XRPL 기반 해커톤 프로젝트 API 문서",
-    },
-    servers: [
-      {
-        url: `http://localhost:${PORT}`,
-        description: "개발 서버"
-      }
-    ],
-  },
-  apis: ["./src/routes/*.js"], // API 문서가 있는 파일들
-};
-
-const swaggerSpec = swaggerJsdoc(swaggerOptions);
+// app.use('/api-docs', (req, res, next) => {
+//   res.removeHeader('Content-Security-Policy');
+//   next();
+// });
+// apiDoc 문서 서빙
+app.use('/api-docs', express.static(path.join(__dirname, '../apidoc')));
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false,  // apiDoc 호환성을 위해 CSP 비활성화
+}));
+
 app.use(
   cors({
     origin:
@@ -69,9 +57,6 @@ app.use((req, res, next) => {
   });
   next();
 });
-
-// Swagger UI 설정
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Health check endpoint
 app.get("/health", (req, res) => {

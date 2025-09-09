@@ -2,23 +2,20 @@ const xrpl = require("xrpl");
 const logger = require("../utils/logger");
 
 class XRPLClient {
-  constructor() {
+  constructor(serverUrl, network) {
     this.client = null;
     this.isConnected = false;
-    this.serverUrl =
-      process.env.XRPL_SERVER || "wss://s.altnet.rippletest.net:51233";
-    this.network = process.env.XRPL_NETWORK || "testnet";
+    this.serverUrl = serverUrl || process.env.XRPL_SERVER || "wss://s.altnet.rippletest.net:51233";
+    this.network = network || process.env.XRPL_NETWORK || "testnet";
   }
 
   // 연결 관리
   // 명시적 연결 메서드 (기존과 호환성 유지)
   async connect() {
-      if (this.isConnected) {
-        logger.info("XRPL 클라이언트가 이미 연결되어 있습니다");
-        return this.client;
-      }
-
-    try {
+    if (this.isConnected) {
+      logger.info("XRPL 클라이언트가 이미 연결되어 있습니다");
+      return this.client;
+    } try {
       logger.info(`XRPL 서버에 연결 중: ${this.serverUrl}`);
       this.client = new xrpl.Client(this.serverUrl);
       await this.client.connect();
@@ -65,10 +62,11 @@ class XRPLClient {
     }
   }
 
-  async submitAndWait(txBlob) {
+  async submitAndWait(txBlob, options = undefined) {
     try {
       const client = await this.getClient();
-      return await client.submitAndWait(txBlob);
+      // options 예: { wallet }
+      return await client.submitAndWait(txBlob, options);
     } catch (error) {
       logger.error("트랜잭션 전송 실패:", error);
       throw error;
@@ -91,7 +89,14 @@ class XRPLClient {
   async getXrpBalance(address) {
     try {
       const client = await this.getClient();
-      return await client.getXrpBalance(address);
+      const response = await client.request({
+        command: "account_info",
+        account: address,
+        ledger_index: "validated"
+      });
+
+    const drops = response.result.account_data.Balance;
+    return xrpl.dropsToXrp(drops); // XRP 단위로 변환
     } catch (error) {
       logger.error(`잔액 조회 실패 (${address}):`, error);
       throw error;
@@ -144,4 +149,10 @@ class XRPLClient {
   }
 }
 
-module.exports = new XRPLClient();
+// 하이브리드 export
+const xrplClient = new XRPLClient();
+
+module.exports = {
+  xrplClient,     // 싱글톤 인스턴스
+  XRPLClient      // 클래스 자체
+};

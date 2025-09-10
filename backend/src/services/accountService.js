@@ -1,5 +1,5 @@
 const logger = require("../utils/logger");
-const {XRPLClient} = require("./xrplClient");
+const {xrplClient, XRPLClient} = require("./xrplClient");
 
 /**
  * 계정 관리 서비스
@@ -54,16 +54,19 @@ class AccountService {
         secret: wallet.seed,
         publicKey: wallet.publicKey,
         privateKey: wallet.privateKey,
-        balance: fundResult.balance,
+        balance: parseFloat(XRPLClient.xrpToDrops(fundResult.balance))|| 0,
+        balanceXRP: fundResult.balance,
         userId: nickname,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
 
       this.accounts.set(wallet.address, newAccount);
-      logger.info(`계정 생성 완료: ${newAccount.address}`);
+      await this.getAccountInfo(wallet.address);
+      const newLoadedAccount = this.accounts.get(wallet.address);
+      logger.info(`계정 생성 완료: ${newLoadedAccount.address}`);
 
-      return { success: true, account: newAccount };
+      return { success: true, account: newLoadedAccount };
     } catch (error) {
       logger.error("계정 생성 실패:", error);
       return { success: false, message: error.message, account: null };
@@ -89,10 +92,11 @@ class AccountService {
       // 핵심 정보 구성
       const accountInfo = {
         address: validAddress,
-        balance: parseFloat(XRPLClient.dropsToXrp(accountData.Balance)),
-        // sequence: accountData.Sequence,           // 트랜잭션 순서
-        // ownerCount: accountData.OwnerCount,      // 계정이 소유한 항목 수
-        // flags: accountData.Flags,                // 계정 설정 플래그
+        balance: parseFloat(accountData.Balance)|| 0,
+        balanceXRP: parseFloat(XRPLClient.dropsToXrp(accountData.Balance))|| 0,
+        sequence: accountData.Sequence,           // 트랜잭션 순서
+        ownerCount: accountData.OwnerCount,      // 계정이 소유한 항목 수
+        flags: accountData.Flags,                // 계정 설정 플래그
         updatedAt: new Date().toISOString(),
       };
 
@@ -129,13 +133,17 @@ class AccountService {
   async getBalance(address) {
     try {
       const validAddress = this.validateAddress(address);
-      const balance = await xrplClient.getXrpBalance(validAddress);
+      const balanceXRP = parseFloat(await xrplClient.getXrpBalance(validAddress)) || 0;
+      const balance = parseFloat(XRPLClient.xrpToDrops(balanceXRP))|| 0;
+      logger.error(`balanceXRP (${address}):`, parseFloat(await xrplClient.getXrpBalance(validAddress)));
+      logger.error(`balance (${address}):`, parseFloat(XRPLClient.xrpToDrops(balanceXRP))|| 0);
 
       return {
         success: true,
         data: {
           address: validAddress,
-          balance
+          balance,
+          balanceXRP
         },
         message: "잔액 조회 성공"
       };

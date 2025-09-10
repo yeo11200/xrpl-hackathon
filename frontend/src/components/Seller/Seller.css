@@ -1,0 +1,207 @@
+.seller-page {
+  max-width: 960px;
+  margin: 40px auto;
+  padding: 20px;
+  font-family: "Pretendard", sans-serif;
+}
+
+.seller-title {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 24px;
+  text-align: center;
+  color: #111827;
+}
+
+.table-wrapper {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  overflow-x: auto; /* ✅ 작은 화면에서 가로 스크롤 */
+}
+
+.seller-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px; /* ✅ 너무 좁아지지 않도록 */
+}
+
+.seller-table th,
+.seller-table td {
+  padding: 14px 16px;
+  text-align: center;
+  font-size: 15px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.seller-table th {
+  background: #f9fafb;
+  font-weight: 600;
+  color: #374151;
+}
+
+.buyer {
+  font-family: monospace;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.status {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.status.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status.paid {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status.refunded {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.refund-btn {
+  padding: 8px 14px;
+  background: #ef4444;
+  border: none;
+  color: white;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.refund-btn:hover {
+  background: #dc2626;
+}
+
+.toast {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #16a34a;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 14px;
+  z-index: 999;
+  white-space: nowrap;
+  width: auto;
+  max-width: 90%;
+  height: 30px;
+  border-radius: 10px;
+}
+
+/* 📱 반응형: 768px 이하 (태블릿/모바일) */
+@media (max-width: 768px) {
+  .seller-title {
+    font-size: 22px;
+  }
+
+  .seller-table {
+    font-size: 14px;
+    min-width: 500px;
+  }
+
+  .refund-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+  .toast {
+    font-size: 13px;
+    padding: 6px 10px; /* ✅ 패딩 줄이기 */
+    border-radius: 4px;
+    bottom: 12px; /* ✅ 너무 위로 안 뜨게 */
+    max-width: 80%; /* ✅ 너무 길면 자동 줄바꿈 */
+    white-space: normal; /* ✅ 모바일에서는 필요시 줄바꿈 허용 */
+    line-height: 1.4;
+    border-radius: 10px;
+  }
+}
+
+/* 📱 더 작은 화면: 480px 이하 → 카드뷰 전환 */
+@media (max-width: 480px) {
+  .seller-table {
+    font-size: 14px;
+    min-width: auto;
+  }
+
+  .seller-table,
+  .seller-table thead,
+  .seller-table tbody,
+  .seller-table th,
+  .seller-table td,
+  .seller-table tr {
+    display: block;
+  }
+
+  .seller-table thead {
+    display: none; /* 헤더 제거 */
+  }
+
+  .seller-table tr {
+    margin-bottom: 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    width: 100%;
+    padding: 12px;
+    background: white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    width: auto;
+    min-width: auto;
+  }
+
+  .seller-table td {
+    padding: 8px 0;
+    text-align: left;
+    border: none;
+    font-size: 14px;
+    width: auto;
+    min-width: auto;
+  }
+
+  .seller-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    margin-right: 8px;
+    color: #374151;
+  }
+
+  .buyer {
+    word-break: break-all; /* 긴 주소 줄바꿈 */
+  }
+
+  .refund-btn {
+    width: 100%; /* ✅ 카드 전체 폭 차지 안함 */
+    padding: 8px;
+    font-size: 14px;
+  }
+  .toast {
+    position: fixed; /* ✅ 화면 기준으로 고정 */
+    top: 50%; /* 세로 중앙 */
+    left: 35%; /* 가로 중앙 */
+    transform: translate(-50%, -50%); /* 정확히 중앙 */
+    align-items: center;
+    justify-self: center;
+    align-content: center;
+    font-size: 13px;
+    padding: 6px 10px; /* ✅ 패딩 줄이기 */
+    border-radius: 4px;
+    bottom: 12px; /* ✅ 너무 위로 안 뜨게 */
+    max-width: 80%; /* ✅ 너무 길면 자동 줄바꿈 */
+    white-space: normal; /* ✅ 모바일에서는 필요시 줄바꿈 허용 */
+    line-height: 1.4;
+    border-radius: 10px;
+  }
+}

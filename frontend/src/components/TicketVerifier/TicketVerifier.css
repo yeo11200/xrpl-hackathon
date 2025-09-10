@@ -1,0 +1,52 @@
+/* 화면 중앙 정렬 */
+.verifier-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh; /* 전체 화면 세로 중앙 */
+  background: linear-gradient(135deg, #1e293b, #334155); /* 예쁜 배경 */
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+/* 카드 */
+.verifier-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  padding: 24px;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+}
+
+/* 제목 */
+.title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 16px;
+  color: #111827;
+}
+
+/* 비디오 (카메라) */
+.scanner-video {
+  width: 100%;
+  border-radius: 12px;
+  border: 2px solid #e5e7eb;
+  margin-bottom: 16px;
+}
+
+/* 결과 텍스트 */
+.result {
+  font-size: 1rem;
+  font-weight: 500;
+  margin-top: 12px;
+}
+
+.result.success {
+  color: #16a34a; /* 초록 */
+}
+
+.result.error {
+  color: #dc2626; /* 빨강 */
+}

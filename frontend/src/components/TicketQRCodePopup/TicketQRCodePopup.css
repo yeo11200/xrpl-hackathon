@@ -1,0 +1,116 @@
+/* 배경 어두운 오버레이 */
+.popup-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+/* 팝업 카드 */
+.popup-card {
+  position: relative;
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  width: 320px;
+  max-width: 90%;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+/* 제목 */
+.popup-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-bottom: 16px;
+  color: #111827;
+}
+
+/* 텍스트 */
+.popup-text {
+  font-size: 0.9rem;
+  color: #374151;
+  margin-top: 12px;
+}
+
+/* 버튼 */
+.open-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  background: #4f46e5;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.open-btn:hover {
+  background: #4338ca;
+}
+
+.close-btn {
+  margin-top: 16px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  background: #ef4444;
+  color: white;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.close-btn:hover {
+  background: #dc2626;
+}
+
+/* 정보 섹션 스타일 */
+.popup-info {
+  margin: 20px 0;
+  text-align: left;
+  max-width: 100%;
+}
+
+.info-section {
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #007bff;
+}
+
+.info-section h3 {
+  margin: 0 0 12px 0;
+  color: #007bff;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.info-section p {
+  margin: 8px 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.info-section strong {
+  color: #333;
+  font-weight: 600;
+}
+
+.address-text {
+  font-family: "Courier New", monospace;
+  font-size: 12px;
+  background: #e9ecef;
+  padding: 8px;
+  border-radius: 4px;
+  word-break: break-all;
+  color: #495057;
+  border: 1px solid #dee2e6;
+}

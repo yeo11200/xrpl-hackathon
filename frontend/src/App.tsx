@@ -7,7 +7,7 @@ import {
 } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { TicketVerifierPage } from "./pages/TicketVerifierPage";
-import Header from "./components/\bHeader";
+import Header from "./components/Header";
 import TicketQRCodePopup from "./components/TicketQRCodePopup";
 import { initXrplClient } from "./utils/xrpl-client";
 import { SellerPage } from "./pages/SellerPage";
@@ -108,3 +108,7 @@ function App() {
         </main>
       </div>
     </Router>
+  );
+}
+
+export default App;

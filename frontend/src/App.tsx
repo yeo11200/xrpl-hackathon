@@ -1,113 +1,110 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { Route, Routes, BrowserRouter, Navigate } from "react-router-dom";
-import { NFT } from "./pages/NFT";
+import React, { useEffect, useState } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useLocation,
+} from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
+import { TicketVerifierPage } from "./pages/TicketVerifierPage";
+import Header from "./components/\bHeader";
+import TicketQRCodePopup from "./components/TicketQRCodePopup";
+import { initXrplClient } from "./utils/xrpl-client";
+import { SellerPage } from "./pages/SellerPage";
 
-export type AccountResponse = {
-  status: string;
-  data: {
-    account_address: string;
-  };
+// 페이지 컴포넌트 예시
+const PageWrapper = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <motion.div
+      className="bg-white rounded-2xl shadow p-6"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.3 }}
+    >
+      {children}
+    </motion.div>
+  );
 };
 
-export type ErrorResponse = {
-  status: string;
-  data: {
-    code: string;
-    message: string;
+const Home = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const dummyData = {
+    sellerAddress: "rLQqxNFHqdQy5Pj5nXsqD54X4fJYh4PdH",
+    buyerAddress: "rLQqxNFHqdQy5Pj5nXsqD54X4fJYh4PdH",
+    price: "100",
   };
+
+  return (
+    <PageWrapper>
+      <h1 className="text-2xl font-bold">🏠 홈</h1>
+      <p className="mt-2 text-gray-600">여기는 메인 페이지입니다.</p>
+      <button onClick={() => setIsOpen(true)} style={{ padding: "12px 20px" }}>
+        🎟️ 티켓 QR 보기
+      </button>
+
+      <TicketQRCodePopup
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        qrData={dummyData}
+      />
+    </PageWrapper>
+  );
+};
+
+const Payments = () => (
+  <PageWrapper>
+    <h1 className="text-2xl font-bold">💳 결제내역</h1>
+    <p className="mt-2 text-gray-600">최근 결제 기록을 확인하세요.</p>
+  </PageWrapper>
+);
+
+const Subscriptions = () => (
+  <PageWrapper>
+    <h1 className="text-2xl font-bold">📦 구독 관리</h1>
+    <p className="mt-2 text-gray-600">내 구독 상품을 관리할 수 있습니다.</p>
+  </PageWrapper>
+);
+
+const Profile = () => (
+  <PageWrapper>
+    <h1 className="text-2xl font-bold">👤 마이페이지</h1>
+    <p className="mt-2 text-gray-600">개인 정보를 확인하세요.</p>
+  </PageWrapper>
+);
+
+// 라우트 애니메이션 컨테이너
+const AnimatedRoutes = () => {
+  const location = useLocation();
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={<Home />} />
+        <Route path="/payments" element={<Payments />} />
+        <Route path="/subscriptions" element={<Subscriptions />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/ticket-verifier" element={<TicketVerifierPage />} />
+        <Route path="/seller" element={<SellerPage />} />
+      </Routes>
+    </AnimatePresence>
+  );
 };
 
 function App() {
-  // const { getFTsByIssuer } = useXrplAccount();
-  // const [hasWallet, setHasWallet] = useState<boolean | null>(
-  //   !!localStorage.getItem("userInfo")
-  // );
-
-  // // 친구 계정 생성 함수
-  // const initializeFriends = useCallback(async () => {
-  //   const friends = JSON.parse(localStorage.getItem("friends") || "[]");
-
-  //   if (friends.length === 0) {
-  //     try {
-  //       const newFriends = [
-  //         {
-  //           nickname: "카이",
-  //           address: "rJkNdbv3UfhFHpYA4Z43MT1kikM4cbzx3N",
-  //           emoji: "😎",
-  //           secret: "sEdVFQdrinmTnE4Crz3qw6NR7Q7rMBg",
-  //         },
-  //         {
-  //           nickname: "리암",
-  //           address: "rNo2tAqkdM7g189BjqV9USZo1PtaM6S27t",
-  //           emoji: "🚀",
-  //           secret: "sEdTk578DYn1tJCrmiePyNG7N1c4mCm",
-  //         },
-  //         {
-  //           nickname: "준",
-  //           address: "rp95ayUo6SkpVQqbGkr4wPK7SgDfUPUXjE",
-  //           emoji: "🔥",
-  //           secret: "sEdV9gPQcPZK6w3x4D7mipFVUbQaBuP",
-  //         },
-  //         {
-  //           nickname: "해리",
-  //           address: "rNsPBkhVGojfDZcZqYk3zX3xrJahYRbA1H",
-  //           emoji: "🌟",
-  //           secret: "sEd77AMoSqSM5ZMcxeivehqESarmo9h",
-  //         },
-  //         {
-  //           nickname: "제이콥",
-  //           address: "rJ9uCtzbGa14NuPYuhPxX1umBFjnzAQxhn",
-  //           emoji: "🎮",
-  //           secret: "sEdTrcU5S9Nv9TznFDgEBKErSHjCfpA",
-  //         },
-  //       ];
-  //       // 로컬 스토리지에 저장
-  //       localStorage.setItem("friends", JSON.stringify(newFriends));
-  //       console.log("친구 계정 생성 완료:", newFriends);
-  //     } catch (error) {
-  //       console.error("친구 계정 생성 오류:", error);
-  //     }
-  //   }
-  // }, []);
-
-  // useEffect(() => {
-  //   // 로컬스토리지에서 지갑 정보 확인
-  //   const checkWalletExists = async () => {
-  //     const userInfo = localStorage.getItem("userInfo");
-  //     setHasWallet(!!userInfo);
-
-  //     if (userInfo) {
-  //       const userInfoObj = JSON.parse(userInfo);
-  //       getSocketServer(userInfoObj.address);
-  //       const result = await getFTsByIssuer(userInfoObj.address);
-  //       console.log(result, "result");
-
-  //       if (result.success) {
-  //         localStorage.setItem("tokens", JSON.stringify(result.tokens));
-  //       }
-  //     }
-  //   };
-
-  //   checkWalletExists();
-  //   initializeFriends(); // 친구 목록 초기화
-  // }, [initializeFriends, getFTsByIssuer]);
+  useEffect(() => {
+    initXrplClient();
+  }, []);
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<NFT />} />
-        {/* <Route path="/wallet" element={<Wallet />} />
-                      <Route
-                        path="/transaction-history"
-                        element={<TransactionHistory />}
-                      />
-                      <Route path="/friends" element={<FriendList />} />
-                      <Route path="/nft" element={<NftAccount />} />
-                      <Route path="/tickets" element={<TicketManager />} />
-                      <Route path="/verify" element={<TicketVerifier />} /> */}
-      </Routes>
-    </BrowserRouter>
-  );
-}
+    <Router>
+      <div className="min-h-screen bg-gray-50 text-gray-900">
+        <Header />
 
-export default App;
+        <main>
+          <section className="w-full md:w-3/4">
+            <AnimatedRoutes />
+          </section>
+        </main>
+      </div>
+    </Router>

@@ -32,4 +32,6 @@ dist-ssr
 
 */pnpm-lock.yaml
 .env
+
+cert/
 backend/apidoc

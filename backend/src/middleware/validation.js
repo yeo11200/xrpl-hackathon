@@ -32,9 +32,16 @@ const validateRequest = (schema) => {
 const schemas = {
   // 📋 기본 계정 관리
   createAccount: Joi.object({
-    nickname: Joi.string().min(2).max(50).required().messages({
+    nickname: Joi.string()
+    .min(2)
+    .max(50)
+    .pattern(/^[A-Za-z0-9가-힣]+$/)
+    .required()
+    .messages({
       'string.empty': '닉네임은 필수입니다',
-      'string.min': '닉네임은 최소 2자 이상이어야 합니다'
+      'string.min': '닉네임은 최소 2자 이상이어야 합니다',
+      'string.max': '닉네임은 최대 50자까지 가능합니다',
+      'string.pattern.base': '닉네임은 한글/영문/숫자만 가능합니다'
     })
   }),
   

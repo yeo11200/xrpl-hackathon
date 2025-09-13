@@ -199,9 +199,12 @@ GET /api/payment/stats?address={address}
 src/
 ├── server.js          # 메인 서버 파일
 ├── routes/            # API 라우터
+│   ├── account.js           # 개인 계정 관리
 │   ├── xrpl.js       # XRPL 관련 API
 │   └── payment.js    # 결제 관련 API
 ├── services/          # 비즈니스 로직
+│   ├── accountService.js    # 계정 관리 서비스
+│   ├── cryptoPriceService.js # XRP 시세 조회
 │   ├── xrplClient.js # XRPL 클라이언트
 │   └── paymentService.js # 결제 서비스
 ├── middleware/        # 미들웨어

@@ -11,6 +11,8 @@ import Header from "./components/Header";
 import TicketQRCodePopup from "./components/TicketQRCodePopup";
 import { initXrplClient } from "./utils/xrpl-client";
 import { SellerPage } from "./pages/SellerPage";
+import { QpayMinimalShoppingPage } from "./pages/QpayMinimalShoppingPage";
+
 
 // 페이지 컴포넌트 예시
 const PageWrapper = ({ children }: { children: React.ReactNode }) => {
@@ -86,6 +88,8 @@ const AnimatedRoutes = () => {
         <Route path="/profile" element={<Profile />} />
         <Route path="/ticket-verifier" element={<TicketVerifierPage />} />
         <Route path="/seller" element={<SellerPage />} />
+        <Route path="/QpayMinimalShopping" element={<QpayMinimalShoppingPage/>} />
+ 
       </Routes>
     </AnimatePresence>
   );

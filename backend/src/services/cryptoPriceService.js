@@ -1,6 +1,8 @@
 // crypto-price.service.js (Node.js용)
-// Node.js에서는 fetch 설치 필요
-const fetch = require("node-fetch"); // npm install node-fetch
+// Node 18+는 글로벌 fetch 제공. 그 이하 버전은 node-fetch를 동적 import로 사용
+const fetch =
+  globalThis.fetch ||
+  ((...args) => import("node-fetch").then(({ default: fetchFn }) => fetchFn(...args)));
 const logger = require("../utils/logger");
 /**
  * 암호화폐 시세 관련 서비스

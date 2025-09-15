@@ -11,9 +11,11 @@ const paymentRoutes = require("./routes/payment");
 const accountRoutes = require("./routes/account");
 const shopRoutes = require("./routes/shop");
 const errorHandler = require("./middleware/errorHandler");
+const { supabase } = require("./services/supabaseClient");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const isProduction = process.env.NODE_ENV === "production";
 
 // app.use('/api-docs', (req, res, next) => {
 //   res.removeHeader('Content-Security-Policy');
@@ -27,15 +29,29 @@ app.use(helmet({
   contentSecurityPolicy: false,  // apiDoc 호환성을 위해 CSP 비활성화
 }));
 
-app.use(
-  cors({
-    origin:
-      process.env.NODE_ENV === "production"
-        ? ["https://yourdomain.com"]
-        : ["http://localhost:3000", "http://localhost:3001"],
-    credentials: true,
-  })
-);
+// CORS 설정: 개발은 localhost 전 포트 허용, 운영은 화이트리스트 사용
+const devOriginRegex = /^https?:\/\/(localhost|127\.0\.0\.1)(:\\d+)?$/;
+const prodWhitelist = (process.env.CORS_ORIGINS || "https://yourdomain.com")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+/** @type {import('cors').CorsOptions} */
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true); // 서버-서버/헬스체크 등 Origin 없음 허용
+    if (!isProduction && devOriginRegex.test(origin)) return callback(null, true);
+    if (isProduction && prodWhitelist.includes(origin)) return callback(null, true);
+    return callback(null, false);
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+  optionsSuccessStatus: 204,
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 // Rate limiting
 const limiter = rateLimit({
@@ -66,6 +82,25 @@ app.get("/health", (req, res) => {
     uptime: process.uptime(),
     environment: process.env.NODE_ENV,
   });
+});
+
+/**
+ * @api {get} /db-health Supabase DB health check
+ * @apiName GetDBHealth
+ * @apiGroup Account
+ * @apiSuccess {String} status OK when connected
+ * @apiSuccess {String} details Additional info
+ */
+app.get("/db-health", async (req, res, next) => {
+	try {
+		const { data, error } = await supabase.rpc('healthcheck');
+		if (error) {
+			return res.status(500).json({ status: "ERROR", error: error.message });
+		}
+		return res.json({ status: data === true ? "OK" : "UNKNOWN" });
+	} catch (err) {
+		return next(err);
+	}
 });
 
 // API routes

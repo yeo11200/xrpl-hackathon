@@ -4,4 +4,18 @@
 
 body {
   margin: 0;
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
+
+/* 헤더 높이만큼 상단 여백 추가 */
+.page-container {
+  padding-top: 80px; /* 헤더 높이 + 여백 */
+  min-height: 100vh;
+}
+
+/* 반응형 헤더 높이 조정 */
+@media (max-width: 768px) {
+  .page-container {
+    padding-top: 70px;
+  }
 }

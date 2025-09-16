@@ -1,10 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import './QpayMinimalShopping.css';
+import React from "react";
+import "./QpayMinimalShopping.css";
 
 const QpayMinimalShopping = () => {
-  const [cartCount, setCartCount] = useState(0);
-  const [isScrolled, setIsScrolled] = useState(false);
-
   // Products data
   const products = [
     {
@@ -13,8 +10,9 @@ const QpayMinimalShopping = () => {
       originalPrice: 1200000,
       salePrice: 840000,
       discount: "30% OFF",
-      description: "최신 기술이 집약된 프리미엄 스마트폰. 뛰어난 성능과 세련된 디자인이 조화를 이룹니다.",
-      icon: "📱"
+      description:
+        "최신 기술이 집약된 프리미엄 스마트폰. 뛰어난 성능과 세련된 디자인이 조화를 이룹니다.",
+      icon: "📱",
     },
     {
       id: 2,
@@ -22,8 +20,9 @@ const QpayMinimalShopping = () => {
       originalPrice: 1800000,
       salePrice: 1350000,
       discount: "25% OFF",
-      description: "초경량 울트라씬 노트북. 어디서나 휴대 가능한 강력한 성능을 경험하세요.",
-      icon: "💻"
+      description:
+        "초경량 울트라씬 노트북. 어디서나 휴대 가능한 강력한 성능을 경험하세요.",
+      icon: "💻",
     },
     {
       id: 3,
@@ -31,9 +30,10 @@ const QpayMinimalShopping = () => {
       originalPrice: 450000,
       salePrice: 270000,
       discount: "40% OFF",
-      description: "프리미엄 노이즈 캔슬링 헤드폰. 완벽한 음질과 편안한 착용감을 제공합니다.",
-      icon: "🎧"
-    }
+      description:
+        "프리미엄 노이즈 캔슬링 헤드폰. 완벽한 음질과 편안한 착용감을 제공합니다.",
+      icon: "🎧",
+    },
   ];
 
   // Categories data
@@ -43,41 +43,14 @@ const QpayMinimalShopping = () => {
     { name: "Home & Living", description: "라이프스타일 제품" },
     { name: "Beauty", description: "프리미엄 뷰티 제품" },
     { name: "Sports", description: "스포츠 & 아웃도어" },
-    { name: "Books", description: "도서 & 문구류" }
+    { name: "Books", description: "도서 & 문구류" },
   ];
-
-  // Scroll effect
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 100);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Add to cart function
-  const addToCart = (productId) => {
-    setCartCount(prev => prev + 1);
-    
-    // Show feedback
-    const button = document.querySelector(`[data-product-id="${productId}"]`);
-    if (button) {
-      button.classList.add('button-added');
-      button.textContent = 'Added!';
-      
-      setTimeout(() => {
-        button.classList.remove('button-added');
-        button.textContent = 'Add to Cart';
-      }, 1500);
-    }
-  };
 
   // Smooth scroll function
   const scrollToSection = (sectionId) => {
     const element = document.getElementById(sectionId);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
 
@@ -88,88 +61,19 @@ const QpayMinimalShopping = () => {
 
   return (
     <div className="qpay-app">
-      {/* Header */}
-      <header className={`header ${isScrolled ? 'header--scrolled' : ''}`}>
-        <div className="container">
-          <nav className="nav">
-            <a 
-              href="#" 
-              className="logo" 
-              onClick={(e) => {
-                e.preventDefault();
-                scrollToSection('hero');
-              }}
-            >
-              Qpay
-            </a>
-            <ul className="nav-links">
-              <li>
-                <a 
-                  href="#products"
-                  className="nav-link" 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    scrollToSection('products');
-                  }}
-                >
-                  Products
-                </a>
-              </li>
-              <li>
-                <a 
-                  href="#categories"
-                  className="nav-link" 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    scrollToSection('categories');
-                  }}
-                >
-                  Categories
-                </a>
-              </li>
-              <li>
-                <a 
-                  href="#about"
-                  className="nav-link" 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    scrollToSection('about');
-                  }}
-                >
-                  About
-                </a>
-              </li>
-              <li>
-                <a href="#" className="nav-link">Contact</a>
-              </li>
-            </ul>
-            <div className="nav-actions">
-              <button className="nav-button">🔍</button>
-              <button className="nav-button">❤️</button>
-              <button className="nav-button cart-button">
-                🛒
-                {cartCount > 0 && (
-                  <span className="cart-count">{cartCount}</span>
-                )}
-              </button>
-              <button className="nav-button">로그인</button>
-            </div>
-          </nav>
-        </div>
-      </header>
-
       {/* Hero Section */}
       <section id="hero" className="hero">
         <div className="hero-content">
           <div className="sale-badge">SPECIAL OFFER</div>
-          <h1 className="hero-title">Qpay</h1>
+          <h1 className="hero-title">Xpay</h1>
           <p className="hero-description">
-            프리미엄 제품을 합리적인 가격에.<br />
+            프리미엄 제품을 합리적인 가격에.
+            <br />
             큐레이션된 최고의 쇼핑 경험을 제공합니다.
           </p>
-          <button 
+          <button
             className="cta-button"
-            onClick={() => scrollToSection('products')}
+            onClick={() => scrollToSection("products")}
           >
             Shop Now
           </button>
@@ -181,7 +85,7 @@ const QpayMinimalShopping = () => {
         <div className="container">
           <h2 className="section-title">FEATURED</h2>
           <div className="products-grid">
-            {products.map(product => (
+            {products.map((product) => (
               <div key={product.id} className="product-item">
                 <div className="product-image">
                   {product.icon}
@@ -197,16 +101,7 @@ const QpayMinimalShopping = () => {
                       {formatPrice(product.salePrice)}
                     </span>
                   </div>
-                  <p className="product-description">
-                    {product.description}
-                  </p>
-                  <button 
-                    className="buy-button"
-                    data-product-id={product.id}
-                    onClick={() => addToCart(product.id)}
-                  >
-                    Add to Cart
-                  </button>
+                  <p className="product-description">{product.description}</p>
                 </div>
               </div>
             ))}
@@ -239,14 +134,14 @@ const QpayMinimalShopping = () => {
             <div className="about-text">
               <h2 className="about-title">ABOUT</h2>
               <p className="about-description">
-                Qpay는 프리미엄 제품을 합리적인 가격에 제공하는 큐레이션 쇼핑 플랫폼입니다.
+                Xpay는 프리미엄 제품을 합리적인 가격에 제공하는 큐레이션 쇼핑
+                플랫폼입니다.
               </p>
               <p className="about-description">
-                엄선된 브랜드와 제품들로 고객에게 최고의 쇼핑 경험을 선사하며, 품질과 가치를 동시에 추구합니다.
+                엄선된 브랜드와 제품들로 고객에게 최고의 쇼핑 경험을 선사하며,
+                품질과 가치를 동시에 추구합니다.
               </p>
-              <button className="cta-button">
-                Learn More
-              </button>
+              <button className="cta-button">Learn More</button>
             </div>
             <div className="about-visual">
               <div className="about-letter">Q</div>
@@ -263,16 +158,24 @@ const QpayMinimalShopping = () => {
               <h3 className="footer-title">고객지원</h3>
               <ul className="footer-list">
                 <li className="footer-list-item">
-                  <a href="#" className="footer-link">주문/배송 조회</a>
+                  <a href="#" className="footer-link">
+                    주문/배송 조회
+                  </a>
                 </li>
                 <li className="footer-list-item">
-                  <a href="#" className="footer-link">교환/반품</a>
+                  <a href="#" className="footer-link">
+                    교환/반품
+                  </a>
                 </li>
                 <li className="footer-list-item">
-                  <a href="#" className="footer-link">고객센터</a>
+                  <a href="#" className="footer-link">
+                    고객센터
+                  </a>
                 </li>
                 <li className="footer-list-item">
-                  <a href="#" className="footer-link">FAQ</a>
+                  <a href="#" className="footer-link">
+                    FAQ
+                  </a>
                 </li>
               </ul>
             </div>
@@ -280,16 +183,24 @@ const QpayMinimalShopping = () => {
               <h3 className="footer-title">회사정보</h3>
               <ul className="footer-list">
                 <li className="footer-list-item">
-                  <a href="#" className="footer-link">회사소개</a>
+                  <a href="#" className="footer-link">
+                    회사소개
+                  </a>
                 </li>
                 <li className="footer-list-item">
-                  <a href="#" className="footer-link">채용정보</a>
+                  <a href="#" className="footer-link">
+                    채용정보
+                  </a>
                 </li>
                 <li className="footer-list-item">
-                  <a href="#" className="footer-link">이용약관</a>
+                  <a href="#" className="footer-link">
+                    이용약관
+                  </a>
                 </li>
                 <li className="footer-list-item">
-                  <a href="#" className="footer-link">개인정보처리방침</a>
+                  <a href="#" className="footer-link">
+                    개인정보처리방침
+                  </a>
                 </li>
               </ul>
             </div>
@@ -297,24 +208,34 @@ const QpayMinimalShopping = () => {
               <h3 className="footer-title">혜택/서비스</h3>
               <ul className="footer-list">
                 <li className="footer-list-item">
-                  <a href="#" className="footer-link">멤버십</a>
+                  <a href="#" className="footer-link">
+                    멤버십
+                  </a>
                 </li>
                 <li className="footer-list-item">
-                  <a href="#" className="footer-link">쿠폰</a>
+                  <a href="#" className="footer-link">
+                    쿠폰
+                  </a>
                 </li>
                 <li className="footer-list-item">
-                  <a href="#" className="footer-link">적립금</a>
+                  <a href="#" className="footer-link">
+                    적립금
+                  </a>
                 </li>
                 <li className="footer-list-item">
-                  <a href="#" className="footer-link">이벤트</a>
+                  <a href="#" className="footer-link">
+                    이벤트
+                  </a>
                 </li>
               </ul>
             </div>
             <div className="footer-section">
-              <h3 className="footer-title">Qpay</h3>
+              <h3 className="footer-title">Xpay</h3>
               <p className="footer-brand">
-                프리미엄 제품을 합리적인 가격에.<br />
-                큐레이션된 최고의 쇼핑 경험을<br />
+                프리미엄 제품을 합리적인 가격에.
+                <br />
+                큐레이션된 최고의 쇼핑 경험을
+                <br />
                 제공합니다.
               </p>
             </div>

@@ -69,8 +69,8 @@ function App() {
 
   return (
     <AuthProvider>
-      <CryptoPriceProvider>
-        <TransactionDetailProvider>
+      <TransactionDetailProvider>
+        <CryptoPriceProvider>
           <Router>
             <div className="min-h-screen bg-gray-50 text-gray-900">
               <Header />
@@ -82,8 +82,8 @@ function App() {
               </main>
             </div>
           </Router>
-        </TransactionDetailProvider>
-      </CryptoPriceProvider>
+        </CryptoPriceProvider>
+      </TransactionDetailProvider>
     </AuthProvider>
   );
 }

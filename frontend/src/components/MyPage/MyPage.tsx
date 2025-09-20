@@ -6,33 +6,35 @@ import {
   getXRPLAccountByAddress,
 } from "../../service/account.service";
 import "./MyPage.css";
+import { useNavigate } from "react-router-dom";
 
 const MyPage = () => {
   const { xrplAccount } = useAuth();
   const [accountData, setAccountData] = useState<XRPLAccount | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [showSecrets, setShowSecrets] = useState(false);
+  const navigate = useNavigate();
 
   // 계정 정보 로드
   const loadAccountData = async () => {
     if (!xrplAccount?.address) {
-      setError("계정 주소가 없습니다.");
       setLoading(false);
       return;
     }
 
     try {
       setLoading(true);
-      setError(null);
       const data = await getXRPLAccountByAddress(xrplAccount.address);
       setAccountData(data);
     } catch (err) {
       console.error("계정 정보 로드 실패:", err);
-      setError("계정 정보를 불러오는데 실패했습니다.");
+      setAccountData(null);
     } finally {
       setLoading(false);
     }
+  };
+
+  const goToHistory = () => {
+    navigate("/payments");
   };
 
   useEffect(() => {
@@ -51,19 +53,9 @@ const MyPage = () => {
   if (loading) {
     return (
       <div className="mypage-container">
-        <div className="loading-spinner">로딩 중...</div>
-      </div>
-    );
-  }
-
-  if (error || !accountData) {
-    return (
-      <div className="mypage-container">
-        <div className="error-message">
-          {error || "계정 정보를 불러올 수 없습니다."}
-          <button onClick={loadAccountData} className="retry-btn">
-            다시 시도
-          </button>
+        <div className="loading-container">
+          <div className="loading-spinner" />
+          <div className="loading-text">계정 정보를 불러오는 중...</div>
         </div>
       </div>
     );
@@ -88,9 +80,6 @@ const MyPage = () => {
           <span className="balance-drops">
             ({formatBalance(accountData.balance)} drops)
           </span>
-          <button onClick={loadAccountData} className="refresh-btn">
-            🔄 새로고침
-          </button>
         </div>
       </motion.div>
 
@@ -110,7 +99,7 @@ const MyPage = () => {
                 <button
                   className="copy-btn"
                   onClick={() => {
-                    navigator.clipboard.writeText(accountData.address);
+                    window.navigator.clipboard.writeText(accountData.address);
                     alert("주소가 복사되었습니다.");
                   }}
                 >
@@ -126,7 +115,7 @@ const MyPage = () => {
                 <button
                   className="copy-btn"
                   onClick={() => {
-                    navigator.clipboard.writeText(accountData.publicKey);
+                    window.navigator.clipboard.writeText(accountData.publicKey);
                     alert("공개키가 복사되었습니다.");
                   }}
                 >
@@ -156,63 +145,15 @@ const MyPage = () => {
             </div>
           </div>
         </div>
-
-        <div className="security-section">
-          <h2>보안 정보</h2>
-          <div className="security-warning">
-            🔒 보안을 위해 시크릿 키와 개인키는 안전한 곳에 보관하세요
-          </div>
-          <div className="security-grid">
-            <div className="security-item">
-              <label>시크릿 키</label>
-              <div className="value-container">
-                <span className="value secret">
-                  {showSecrets
-                    ? accountData.secret
-                    : `${accountData.secret.slice(
-                        0,
-                        8
-                      )}...${accountData.secret.slice(-8)}`}
-                </span>
-                <button
-                  className="reveal-btn"
-                  onClick={() => setShowSecrets(!showSecrets)}
-                >
-                  {showSecrets ? "숨기기" : "보기"}
-                </button>
-              </div>
-            </div>
-
-            <div className="security-item">
-              <label>개인키</label>
-              <div className="value-container">
-                <span className="value secret">
-                  {showSecrets
-                    ? accountData.privateKey
-                    : `${accountData.privateKey.slice(
-                        0,
-                        8
-                      )}...${accountData.privateKey.slice(-8)}`}
-                </span>
-                <button
-                  className="reveal-btn"
-                  onClick={() => setShowSecrets(!showSecrets)}
-                >
-                  {showSecrets ? "숨기기" : "보기"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <motion.div
           className="action-buttons"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.4 }}
         >
-          <button className="action-btn primary">거래 내역 보기</button>
-          <button className="action-btn secondary">계정 설정</button>
+          <button className="action-btn primary" onClick={goToHistory}>
+            거래 내역 보기
+          </button>
         </motion.div>
       </motion.div>
     </div>

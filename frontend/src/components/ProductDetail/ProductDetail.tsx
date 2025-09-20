@@ -34,7 +34,6 @@ const formatPrice = (price: number): string =>
   );
 
 export default function ProductDetail() {
-  const [cartCount, setCartCount] = useState<number>(0);
   const [quantity, setQuantity] = useState<number>(1);
 
   const product: Product = {
@@ -52,11 +51,11 @@ export default function ProductDetail() {
       "초경량 울트라씬 노트북. 어디서나 휴대 가능한 강력한 성능을 경험하세요.",
     features: [
       "💻 강력한 성능의 M4 칩 탑재한 초고성능 프로세서",
-      "🔋 온종일 사용 가능한 최대 24시간 배터리 사용 시간", 
+      "🔋 온종일 사용 가능한 최대 24시간 배터리 사용 시간",
       "🧠 Apple Intelligence를 위한 탄생. 더 스마트하게.",
       "🖥️ 35.9cm Liquid Retina XDR 디스플레이",
       "📷 12MP Center Stage 카메라와 스튜디오급 마이크",
-      "🔌 MagSafe, Thunderbolt 4 포트로 완벽한 연결성"
+      "🔌 MagSafe, Thunderbolt 4 포트로 완벽한 연결성",
     ],
   };
 
@@ -64,45 +63,11 @@ export default function ProductDetail() {
     (1 - product.salePrice / product.originalPrice) * 100
   );
 
-  const handleAddToCart = (): void => setCartCount((prev) => prev + quantity);
   const handleQuantityChange = (change: number): void =>
     setQuantity((prev) => Math.max(1, prev + change));
 
   return (
     <div className="page">
-      {/* Header */}
-      <header className="header">
-        <div className="container header-inner">
-          <div className="brand">Qpay</div>
-          <nav className="nav">
-            <a
-              href="#"
-              onClick={(e) => e.preventDefault()}
-              className="nav-link"
-            >
-              🔍
-            </a>
-            <a
-              href="#"
-              onClick={(e) => e.preventDefault()}
-              className="nav-link"
-            >
-              ❤️
-            </a>
-            <a
-              href="#"
-              onClick={(e) => e.preventDefault()}
-              className="nav-link"
-            >
-              📞
-            </a>
-            <div className="cart-badge">
-              로그인 {cartCount > 0 && `(${cartCount})`}
-            </div>
-          </nav>
-        </div>
-      </header>
-
       {/* Main */}
       <main className="container main">
         {/* Breadcrumb */}
@@ -161,54 +126,51 @@ export default function ProductDetail() {
             </div>
 
             {/* Features */}
-            <div className="features">
-              <h3 className="features-title">주요 특징</h3>
-              <div className="feature-list">
-                {product.features.map((f, i) => (
-                  <div key={i} className="feature-item">
-                    <span className="dot" />
-                    <span>{f}</span>
-                  </div>
-                ))}
+            <div>
+              <div className="features">
+                <h3 className="features-title">주요 특징</h3>
+                <div className="feature-list">
+                  {product.features.map((f, i) => (
+                    <div key={i} className="feature-item">
+                      <span className="dot" />
+                      <span>{f}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {/* Quantity & Add to Cart */}
-            <div className="cta-row">
-              <div className="qty">
-                <button
-                  type="button"
-                  aria-label="수량 감소"
-                  className="qty-btn"
-                  onClick={() => handleQuantityChange(-1)}
-                >
-                  −
-                </button>
-                <span className="qty-val">{quantity}</span>
-                <button
-                  type="button"
-                  aria-label="수량 증가"
-                  className="qty-btn"
-                  onClick={() => handleQuantityChange(1)}
-                >
-                  +
-                </button>
-              </div>
-              <button
-                type="button"
-                className="add-btn"
-                onClick={handleAddToCart}
-              >
-                   Add to Cart
-                  </button>
+              {/* Quantity & Add to Cart */}
+              <div className="cta-row">
+                <div className="qty">
                   <button
                     type="button"
-                    className="buy-now-btn"
-                    onClick={() => alert('즉시 구매 기능')}
+                    aria-label="수량 감소"
+                    className="qty-btn"
+                    onClick={() => handleQuantityChange(-1)}
                   >
-                    즉시 구매
+                    −
+                  </button>
+                  <span className="qty-val">{quantity}</span>
+                  <button
+                    type="button"
+                    aria-label="수량 증가"
+                    className="qty-btn"
+                    onClick={() => handleQuantityChange(1)}
+                  >
+                    +
                   </button>
                 </div>
+                <button type="button" className="add-btn" onClick={() => {}}>
+                  Add to Cart
+                </button>
+                <button
+                  type="button"
+                  className="buy-now-btn"
+                  onClick={() => alert("즉시 구매 기능")}
+                >
+                  즉시 구매
+                </button>
+              </div>
             </div>
 
             {/* Additional Info */}
@@ -223,46 +185,9 @@ export default function ProductDetail() {
                 <strong>2년 보증</strong> - 제조사 보증 포함
               </div>
             </div>
-           </div>
-          </main>
-
-      {/* Footer */}
-      <footer className="footer">
-        <div className="container" style={{ textAlign: "center" }}>
-          <div className="footer-brand">Qpay</div>
-          <div className="footer-links">
-            <a
-              href="#"
-              onClick={(e) => e.preventDefault()}
-              className="footer-link"
-            >
-              About
-            </a>
-            <a
-              href="#"
-              onClick={(e) => e.preventDefault()}
-              className="footer-link"
-            >
-              Products
-            </a>
-            <a
-              href="#"
-              onClick={(e) => e.preventDefault()}
-              className="footer-link"
-            >
-              Support
-            </a>
-            <a
-              href="#"
-              onClick={(e) => e.preventDefault()}
-              className="footer-link"
-            >
-              Privacy
-            </a>
           </div>
-          <div className="footer-copy">© 2024 Qpay. All rights reserved.</div>
         </div>
-      </footer>
+      </main>
     </div>
   );
 }

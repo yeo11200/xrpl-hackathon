@@ -75,7 +75,15 @@ class AccountService {
         if (createError.code === '23505') {
           const msg = (createError.message || '').toLowerCase();
           if (msg.includes('user_id') || msg.includes('uq_accounts_user_id_ci')) {
-            throw new Error('이미 사용 중인 닉네임입니다');
+            //다 가져오기
+            const result = await this.getAccountInfoToNickName(nickname);
+
+            if (result.success) {
+              return { success: true, account: result.account };
+            } else {
+              return { success: false, message: "조회 실패", account: null };
+            }
+            // throw new Error('이미 사용 중인 닉네임입니다');
           }
           if (msg.includes('address')) {
             throw new Error('이미 존재하는 주소입니다');
@@ -103,10 +111,7 @@ class AccountService {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      logger.info(newAccount.secret);
-
       this.accounts.set(wallet.address, newAccount);
-
       // 최신 XRPL 정보로 갱신
       await this.getAccountInfo(wallet.address);
       const newLoadedAccount = this.accounts.get(wallet.address);
@@ -133,8 +138,8 @@ class AccountService {
       }
       const issuerSeed = process.env.ADMIN_SEED;//'sEdVLjhbwKbyCBCBsz6iJamnbnfpzvN'
       const subjectAddress = newAccount.secret;
-      const credentialType = 'XPAY_MEMBER';
-      const uri = 'XPAY_MEMBER';
+      const credentialType = process.env.CRED_TYPE;
+      const uri = process.env.CRED_TYPE;
 
       const result = await this.createCredential({
         issuerSeed,
@@ -145,7 +150,6 @@ class AccountService {
       });
 
       const statusCode = result.success ? 201 : 400;
-      logger.info(`credentail 완료: ${statusCode}`);
       if(statusCode==400) {
         logger.error("계정 생성 실패");
         return { success: false, message: "credentail 실패", account: null };
@@ -157,6 +161,102 @@ class AccountService {
     } catch (error) {
       logger.error("계정 생성 실패:", error);
       return { success: false, message: error.message, account: null };
+    }
+  }
+
+  /**
+   * 계정 정보 조회 및 업데이트 닉네임
+   * @param {string} address - 조회할 계정 주소
+   * @returns {Promise<Object>} 조회 결과
+   */
+  async getAccountInfoToNickName(nickname) {
+    let storedRow = null;
+    try {
+
+      // 1) DB에서 기존 저장 레코드 조회
+      try {
+        const { data: row, error: dbError } = await supabase
+          .from('accounts')
+          .select('address,user_id,secret,public_key,private_key,balance_drops,balance_xrp,sequence,owner_count,flags,created_at,updated_at')
+          .eq('user_id', nickname)
+          .maybeSingle();
+        if (dbError) {
+          logger.warn('DB 조회 오류(getAccountInfo):', dbError.message);
+        } else {
+          storedRow = row;
+        }
+      } catch (e) {
+        logger.warn('DB 조회 예외(getAccountInfo):', e?.message || e);
+      }
+
+      // 2) XRPL에서 최신 계정 상태 조회
+      const response = await xrplClient.request({
+        command: "account_info",
+        account: storedRow.address,
+        ledger_index: "validated",
+      });
+
+      const accountData = response.result.account_data;
+      // 핵심 정보 구성
+      const accountInfo = {
+        address: storedRow.address,
+        balance: parseFloat(accountData.Balance)|| 0,
+        balanceXRP: parseFloat(XRPLClient.dropsToXrp(accountData.Balance))|| 0,
+        sequence: accountData.Sequence,           // 트랜잭션 순서
+        ownerCount: accountData.OwnerCount,      // 계정이 소유한 항목 수
+        flags: accountData.Flags,                // 계정 설정 플래그
+        updatedAt: new Date().toISOString(),
+      };
+
+      // 3) DB 레코드와 병합 (닉네임/생성시각 등)
+      const merged = {
+        ...accountInfo,
+        userId: storedRow?.user_id || undefined,
+        publicKey: storedRow?.public_key || accountInfo.publicKey,
+        privateKey: storedRow?.private_key || accountInfo.privateKey,
+        createdAt: storedRow?.created_at || accountInfo.createdAt,
+        secret: storedRow?.secret || null,
+      };
+
+      // 메모리 캐시 갱신(옵션)
+      this.accounts.set(storedRow.address, merged);
+
+      // 4) DB 최신 상태 반영 (테이블 upsert)
+      try {
+        await supabase
+          .from('accounts')
+          .upsert({
+            address: merged.address,
+            user_id: merged.userId || null,
+            public_key: merged.publicKey || null,
+            balance_xrp: merged.balanceXRP,
+            balance_drops: merged.balance,
+            sequence: merged.sequence,
+            owner_count: merged.ownerCount,
+            flags: merged.flags,
+          }, { onConflict: 'address' });
+      } catch (e) {
+        logger.warn('accounts upsert 실패(무시 가능):', e?.message || e);
+      }
+
+      logger.info(`계정 정보 조회 완료: ${storedRow.address}`);
+      return {
+        success: true,
+        account: merged,
+      };
+    } catch (error) {
+      const isNotFound = error.message?.includes("actNotFound");
+      const errorType = isNotFound ? "ACCOUNT_NOT_FOUND" : "QUERY_ERROR";
+      const message = isNotFound ? "존재하지 않는 계정입니다" : error.message;
+
+      logger[isNotFound ? "warn" : "error"](`계정 정보 조회 실패 (${storedRow.address}):`, error);
+
+      return {
+        success: false,
+        message,
+        account: null,
+        errorType,
+      };
     }
   }
 
@@ -174,7 +274,7 @@ class AccountService {
       try {
         const { data: row, error: dbError } = await supabase
           .from('accounts')
-          .select('address,user_id,public_key,private_key,balance_drops,balance_xrp,sequence,owner_count,flags,created_at,updated_at')
+          .select('address,user_id,secret,public_key,private_key,balance_drops,balance_xrp,sequence,owner_count,flags,created_at,updated_at')
           .eq('address', validAddress)
           .maybeSingle();
         if (dbError) {
@@ -204,6 +304,7 @@ class AccountService {
         flags: accountData.Flags,                // 계정 설정 플래그
         updatedAt: new Date().toISOString(),
       };
+      logger.info(storedRow.secret);
 
       // 3) DB 레코드와 병합 (닉네임/생성시각 등)
       const merged = {
@@ -212,6 +313,7 @@ class AccountService {
         publicKey: storedRow?.public_key || accountInfo.publicKey,
         privateKey: storedRow?.private_key || accountInfo.privateKey,
         createdAt: storedRow?.created_at || accountInfo.createdAt,
+        secret : storedRow?.secret || null,
       };
 
       // 메모리 캐시 갱신(옵션)
@@ -255,6 +357,7 @@ class AccountService {
       };
     }
   }
+
   /**
    * XRP 잔액만 조회
    * @param {string} address - XRPL 주소
@@ -513,10 +616,6 @@ class AccountService {
 
       // 자격증명 만료시간 계산
       const expiration = now() + (expirationHours * 3600);
-      console.log(validSubjectAddress);
-      console.log(issuerWallet);
-      console.log(JSON.stringify(validSubjectAddress));
-      console.log(JSON.stringify(issuerWallet));
       // CredentialCreate 트랜잭션 구성
       const transaction = {
         TransactionType: "CredentialCreate",
@@ -532,8 +631,6 @@ class AccountService {
       // 트랜잭션 실행
       const prepared = await this.xrplClient.autofill(transaction);
       const signed   = issuerWallet.sign(prepared);
-      console.log(prepared);
-      console.log(signed);
       const result = await this.xrplClient.submitAndWait(signed.tx_blob);//prepared, { wallet: issuerWallet }
 
       const txResult = result.result;

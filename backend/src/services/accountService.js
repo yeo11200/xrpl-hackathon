@@ -115,7 +115,8 @@ class AccountService {
       // 최신 XRPL 정보로 갱신
       await this.getAccountInfo(wallet.address);
       const newLoadedAccount = this.accounts.get(wallet.address);
-
+      // 임시
+      newLoadedAccount.secret = newAccount.secret;
       // 4) 잔액/시퀀스 등 최신 상태를 DB에도 반영 (테이블 upsert)
       try {
         await supabase
@@ -414,6 +415,7 @@ class AccountService {
    */
   async sendPayment(txRequest) {
     try {
+      console.log(txRequest.toAddress)
       const validToAddress = this.validateAddress(txRequest.toAddress);
       const validFromAddress = this.validateAddress(txRequest.fromAddress);
 
@@ -444,8 +446,32 @@ class AccountService {
 
       logger.info(`XRP 전송 ${isSuccess ? "성공" : "실패"}: ${txResult.hash}`);
 
+const transactionData = {
+      hash: txResult.hash,
+      amount: txRequest.amount,
+      fromAddress: validFromAddress,
+      toAddress: validToAddress,
+      address: validFromAddress, // 추가 컬럼 (송신자 주소로 설정)
+      timestamp: new Date().toISOString(),
+      status: isSuccess ? "success" : "failed",
+      txType: "Payment",
+      fee: parseFloat(XRPLClient.dropsToXrp(prepared.Fee || "0"))
+    };
+
+    // ✅ 트랜잭션 DB에 저장
+    if (isSuccess) {
+      try {
+        const { success: saveSuccess, error: saveError } = await this.saveTransactionToDB(transactionData);
+        if (!saveSuccess) {
+          logger.warn('트랜잭션 DB 저장 실패:', saveError);
+        }
+      } catch (dbError) {
+        logger.warn('트랜잭션 DB 저장 중 예외:', dbError);
+      }
+    }
+
       // 계정 정보 업데이트
-      await this.getAccountInfo(txRequest.toAddress);
+      // await this.getAccountInfo(txRequest.toAddress);
       await this.getAccountInfo(txRequest.fromAddress);
 
       return {
@@ -470,61 +496,64 @@ class AccountService {
     }
   }
 
-  /**
-   * 트랜잭션 내역 조회
-   * @param {string} address - 계정 주소
-   * @param {number} limit - 조회할 트랜잭션 수 (기본값: 20)
-   * @returns {Promise<Object>} 트랜잭션 내역
-   */
-  async getTransactionHistory(address, limit = 20) {
-    try {
-      const validAddress = this.validateAddress(address);
+/**
+ * 트랜잭션 내역 조회 (DB 기반)
+ * @param {string} address - 계정 주소
+ * @param {number} limit - 조회할 트랜잭션 수 (기본값: 20)
+ * @returns {Promise<Object>} 트랜잭션 내역
+ */
+async getTransactionHistory(address, limit = 20) {
+  try {
+    const validAddress = this.validateAddress(address);
 
-      const { result } = await this.xrplClient.request({
-        command: "account_tx",
-        account: validAddress,
-        limit,
-      });
+    logger.info(`DB 트랜잭션 내역 조회 시작: ${validAddress} (limit: ${limit})`);
 
-      const RIPPLE_EPOCH = 946684800;
+    // Supabase에서 트랜잭션 조회
+    const { data: transactions, error } = await supabase
+      .from('transactions')
+      .select('*')
+      .or(`address.eq.${validAddress},from_address.eq.${validAddress},to_address.eq.${validAddress}`) // address, from_address, to_address 중 하나라도 매칭
+      .order('timestamp', { ascending: false }) // 최신순 정렬
+      .limit(limit);
 
-      const transactions = result.transactions
-        .filter(tx => tx.tx)
-        .map(({ tx, meta }) => {
-          const isSuccess = meta?.TransactionResult === "tesSUCCESS";
-          const rippleTimestamp = tx.date || Math.floor(Date.now() / 1000);
-          const unixTimestamp = (rippleTimestamp + RIPPLE_EPOCH) * 1000;
-
-          return {
-            hash: tx.hash || "",
-            amount: typeof tx.Amount === "string"
-              ? parseFloat(XRPLClient.dropsToXrp(tx.Amount))
-              : 0,
-            fromAddress: tx.Account || "",
-            toAddress: tx.Destination || "",
-            timestamp: new Date(unixTimestamp).toISOString(),
-            status: isSuccess ? "success" : "failed",
-            txType: tx.TransactionType,
-            fee: parseFloat(XRPLClient.dropsToXrp(tx.Fee || "0")),
-          };
-        });
-
-      logger.info(`트랜잭션 내역 조회 성공: ${validAddress} (${transactions.length}건)`);
-
-      return {
-        success: true,
-        transactions,
-      };
-    } catch (error) {
-      logger.error(`트랜잭션 내역 조회 실패 (${address}):`, error);
-
+    if (error) {
+      logger.error(`트랜잭션 내역 조회 실패 (${validAddress}):`, error);
       return {
         success: false,
         message: error.message,
         transactions: [],
       };
     }
+
+    // DB 데이터를 기존 형태로 변환
+    const formattedTransactions = transactions.map(tx => ({
+      hash: tx.hash,
+      amount: parseFloat(tx.amount),
+      fromAddress: tx.from_address,
+      toAddress: tx.to_address,
+      timestamp: tx.timestamp,
+      status: tx.status,
+      txType: tx.tx_type,
+      fee: parseFloat(tx.fee || 0),
+    }));
+
+    logger.info(`DB 트랜잭션 내역 조회 성공: ${validAddress} (${formattedTransactions.length}건)`);
+
+    return {
+      success: true,
+      transactions: formattedTransactions,
+    };
+  } catch (error) {
+    logger.error(`트랜잭션 내역 조회 중 예외 발생 (${address}):`, error);
+
+    return {
+      success: false,
+      message: error.message,
+      transactions: [],
+    };
   }
+}
+
 
   /**
    * 저장된 계정 정보 조회
@@ -885,6 +914,52 @@ class AccountService {
       };
     }
   }
+
+  /**
+   * 계정 정보 조회 및 업데이트 닉네임
+   * @returns {Promise<Object>} 조회 결과
+   */
+  async getAdminAddress() {
+    let storedRow = null;
+    try {
+      const issuerWallet = XRPLClient.walletFromSeed(process.env.ADMIN_SEED);
+      const issuerAddress = issuerWallet.address;
+      return issuerAddress;
+    } catch (error) {
+      
+    }
+  }
+
+  /**
+ * 트랜잭션을 데이터베이스에 저장
+ */
+async saveTransactionToDB(transactionData) {
+  try {
+    const { data, error } = await supabase
+      .from('transactions')
+      .insert({
+        hash: transactionData.hash,
+        amount: parseFloat(transactionData.amount),
+        from_address: transactionData.fromAddress,
+        to_address: transactionData.toAddress,
+        address: transactionData.address,
+        timestamp: transactionData.timestamp,
+        status: transactionData.status,
+        tx_type: transactionData.txType,
+        fee: transactionData.fee
+      })
+      .select()
+      .single();
+
+    if (error) {
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    return { success: false, error };
+  }
+}
 
 }
 

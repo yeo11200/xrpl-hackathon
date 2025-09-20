@@ -36,6 +36,8 @@ hackathon/
 - **거래 내역**: 결제 내역 조회 및 통계
 - **실시간 검증**: 주소 및 시드 검증
 - **RESTful API**: 완전한 REST API 제공
+- **Credentials**: 사용자 생성 후 /api/credential/accept을 통한 자격 증명(자격 증명이 되지 않으면 결제 진행이 되지 않도록 처리)
+- **PermissionedDEX Offer**: /api/account/:address/validation를 통해 검증 된 사용자만 결제 처리로 넘어가도록 처리
 
 ### 프론트엔드 (React + TypeScript)
 

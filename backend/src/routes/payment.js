@@ -2,6 +2,7 @@ const express = require("express");
 const paymentService = require("../services/paymentService");
 const { validateRequest, schemas } = require("../middleware/validation");
 const logger = require("../utils/logger");
+require("dotenv").config();
 
 const router = express.Router();
 
@@ -14,6 +15,7 @@ const router = express.Router();
  * @apiBody {Number} amount 결제 금액 (XRP)
  * @apiBody {String} [description] 결제 설명
  * @apiBody {String} merchantAddress 상점 XRPL 주소
+ * @apiBody {String} subjectSeed 피발급자의 시드값
  *
  * @apiSuccess {Boolean} success 요청 성공 여부
  * @apiSuccess {Object} data 결제 요청 정보
@@ -48,14 +50,40 @@ router.post(
   validateRequest(schemas.createPaymentRequest),
   async (req, res, next) => {
     try {
-      const { amount, description, merchantAddress } = req.body;
+      const { amount, subjectSeed, description, merchantAddress, tokenCurrency, tokenValue } = req.body;
 
       const paymentRequest = await paymentService.createPaymentRequest(
         amount,
         description,
         merchantAddress
       );
-  // ✅ PermissionedDEX + Credential 필드
+
+      // ✅ PermissionedDEX + Credential 기능 추가
+      if (subjectSeed) {
+        try {
+          const permissionedResult = await createPermissionedOfferForPayment({
+            subjectSeed,
+            amount,
+            merchantAddress,
+            tokenCurrency: tokenCurrency || "COFFEE",
+            tokenValue: tokenValue || amount.toString(),
+            paymentRequestId: paymentRequest.id
+          });
+
+          // 결제 요청에 PermissionedDEX 정보 추가
+          paymentRequest.permissionedDEX = {
+            enabled: true,
+            offerHash: permissionedResult.hash,
+            status: permissionedResult.success ? "created" : "failed"
+          };
+
+          logger.info(`PermissionedDEX 오퍼 생성 ${permissionedResult.success ? "성공" : "실패"}:`, permissionedResult.hash);
+        } catch (permissionedError) {
+          logger.error("PermissionedDEX 오퍼 생성 실패:", permissionedError);
+          // PermissionedDEX 실패해도 일반 결제 요청은 계속 진행
+        }
+      }
+    
       res.status(201).json({
         success: true,
         data: paymentRequest,
@@ -65,6 +93,97 @@ router.post(
     }
   }
 );
+
+/**
+ * 결제용 PermissionedDEX 오퍼 생성
+ */
+async function createPermissionedOfferForPayment({
+  subjectSeed,
+  amount,
+  merchantAddress,
+  tokenCurrency = "COFFEE",
+  tokenValue,
+  paymentRequestId
+}) {
+  const { Client, Wallet } = require("xrpl");
+  
+  const client = new Client("wss://s.devnet.rippletest.net:51233");
+  await client.connect();
+
+  try {
+    // .env에서 DOMAIN_ID 가져오기
+    const DOMAIN_ID = process.env.DOMAIN_ID;
+    if (!DOMAIN_ID) {
+      throw new Error("DOMAIN_ID가 .env 파일에 설정되지 않았습니다.");
+    }
+
+    // 유저 지갑 생성
+    const userWallet = Wallet.fromSeed(subjectSeed);
+    
+    logger.info(`PermissionedDEX 오퍼 생성 시작 - 유저: ${userWallet.address}`);
+
+    // OfferCreate 트랜잭션 구성
+    const offerTx = {
+      TransactionType: "OfferCreate",
+      Account: userWallet.address,
+      TakerPays: (parseFloat(amount) * 1000000).toString(), // XRP를 drops 단위로 변환
+      TakerGets: {
+        currency: tokenCurrency,
+        issuer: merchantAddress, // 판매자/발행자 주소
+        value: tokenValue
+      },
+      // PermissionedDEX + Credential 필드
+      CredentialTypes: ["XPAY_MEMBER"], // XPAY_MEMBER 자격증명 필요
+      Domain: toHex("XPAY_MEMBER"), // 특정 결제 도메인
+      DomainID: DOMAIN_ID,
+      Memos: [{
+        Memo: {
+          MemoType: toHex("PAYMENT_REQUEST"),
+          MemoData: toHex(paymentRequestId)
+        }
+      }]
+    };
+
+    logger.info("PermissionedDEX 오퍼 트랜잭션:", JSON.stringify(offerTx, null, 2));
+
+    // 트랜잭션 실행
+    const prepared = await client.autofill(offerTx);
+    const signed = userWallet.sign(prepared);
+    const result = await client.submitAndWait(signed.tx_blob);
+
+    const txResult = result.result;
+    const transactionResult = txResult.meta?.TransactionResult;
+    const isSuccess = transactionResult === "tesSUCCESS";
+
+    logger.info(`PermissionedDEX 오퍼 ${isSuccess ? "성공" : "실패"}: ${txResult.hash}`);
+
+    return {
+      success: isSuccess,
+      hash: txResult.hash,
+      offerSequence: txResult.Sequence,
+      message: isSuccess ? "PermissionedDEX 오퍼가 생성되었습니다" : `오퍼 생성 실패: ${transactionResult}`,
+      transaction: {
+        hash: txResult.hash,
+        userAddress: userWallet.address,
+        merchantAddress,
+        xrpAmount: amount,
+        tokenCurrency,
+        tokenValue,
+        timestamp: new Date().toISOString(),
+        status: isSuccess ? "created" : "failed"
+      }
+    };
+
+  } finally {
+    await client.disconnect();
+  }
+}
+
+// toHex 유틸리티 함수
+function toHex(str) {
+  if (!str) return '';
+  return Buffer.from(str, 'utf8').toString('hex').toUpperCase();
+}
 
 /**
  * @api {post} /api/payment/process 02. 결제 처리

@@ -1,4 +1,4 @@
-/* Header Styles - Inspired by QpayMinimal */
+/* Header Styles */
 .header {
   position: fixed;
   top: 0;
@@ -25,7 +25,6 @@
   align-items: center;
 }
 
-/* Logo */
 .logo {
   font-size: 24px;
   font-weight: 700;
@@ -40,7 +39,7 @@
   color: #333;
 }
 
-/* PC Navigation */
+/* 메뉴 */
 .menu-pc {
   display: flex;
   list-style: none;
@@ -56,7 +55,7 @@
   transition: color 0.3s ease;
   position: relative;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 20px;
 }
 
 .menu-link::after {
@@ -80,7 +79,135 @@
   font-weight: 600;
 }
 
-/* Mobile Menu Button */
+/* 카테고리 드롭다운 */
+.category-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.category-trigger {
+  text-decoration: none;
+  color: #333;
+  font-weight: 500;
+  transition: color 0.3s ease;
+  position: relative;
+  cursor: pointer;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.category-trigger:hover::after {
+  width: 100%;
+}
+
+.category-arrow {
+  font-size: 10px;
+  transition: transform 0.2s ease;
+  color: #666;
+  margin-left: 2px;
+}
+
+/* 드롭다운 메뉴 - 1열 */
+.category-dropdown-menu-1col {
+  position: absolute;
+  top: calc(100% + 15px);
+  left: 0;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  padding: 0;
+  z-index: 1001;
+  display: flex;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.category-menu-left {
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+  padding: 10px 0;
+}
+
+.category-left-item {
+  padding: 10px 20px;
+  font-size: 15px;
+  color: #444;
+  text-decoration: none;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.category-left-item:hover,
+.category-left-item.active {
+  background: rgba(0, 0, 0, 0.05);
+  font-weight: 500;
+}
+
+/* 액션 버튼들 */
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px; /* 기본 간격 */
+}
+
+.nav-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: #333;
+  transition: all 0.3s ease;
+  position: relative;
+  padding: 8px 12px;
+  border-radius: 25px;
+  font-weight: 500;
+  margin-left: -20px;
+}
+
+.nav-button-h {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: #333;
+  transition: all 0.3s ease;
+  position: relative;
+  padding: 8px 12px;
+  border-radius: 25px;
+  font-weight: 500;
+  margin-left: -20px;
+}
+
+.nav-button:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #000;
+}
+
+.nav-button.primary {
+  background: #000;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 25px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 14px;
+}
+
+.nav-button.primary:hover {
+  background: #333;
+  transform: translateY(-1px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* ✅ 마이페이지 & 쿠폰만 묶어서 간격 줄이기 */
+.user-buttons {
+  display: flex;
+  gap:0px; /* 여기를 조정하면 마이페이지와 쿠폰 사이 간격 조절됨 */
+}
+
+/* 모바일 메뉴 */
 .menu-btn {
   background: none;
   border: none;
@@ -96,7 +223,6 @@
   color: #000;
 }
 
-/* Mobile Menu */
 .menu-mobile {
   background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(10px);
@@ -144,49 +270,6 @@
   display: none;
 }
 
-/* Action Buttons */
-.nav-actions {
-  display: flex;
-  gap: 20px;
-  align-items: center;
-}
-
-.nav-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
-  color: #333;
-  transition: all 0.3s ease;
-  position: relative;
-  padding: 8px 16px;
-  border-radius: 25px;
-  font-weight: 500;
-}
-
-.nav-button:hover {
-  background: rgba(0, 0, 0, 0.05);
-  color: #000;
-}
-
-.nav-button.primary {
-  background: #000;
-  color: #fff;
-  padding: 10px 20px;
-  border-radius: 25px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-size: 14px;
-}
-
-.nav-button.primary:hover {
-  background: #333;
-  transform: translateY(-1px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-}
-
-/* Cart Count Badge */
 .cart-count {
   position: absolute;
   top: -2px;
@@ -203,7 +286,7 @@
   font-weight: 600;
 }
 
-/* Responsive Design */
+/* 반응형 */
 @media (max-width: 768px) {
   .menu-pc {
     display: none;
@@ -214,16 +297,20 @@
   }
 
   .nav-actions {
-    gap: 15px;
+    gap: 10px;
   }
 
   .nav-button {
-    padding: 6px 12px;
+    padding: 6px 10px;
     font-size: 14px;
   }
 
   .logo {
     font-size: 20px;
+  }
+
+  .category-dropdown {
+    display: none;
   }
 }
 
@@ -233,7 +320,7 @@
   }
 
   .nav-actions {
-    gap: 10px;
+    gap: 6px;
   }
 
   .nav-button {

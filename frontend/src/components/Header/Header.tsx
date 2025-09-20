@@ -1,25 +1,83 @@
+// Header.tsx
 import React, { useState, useEffect } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../../hooks/useAuth";
+import CategoryDropdown from "./CategoryDropdown";
 import "./Header.css";
 
-const Header = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
+interface MenuItem {
+  name: string;
+  path: string;
+}
+
+interface Category {
+  name: string;
+  korName: string;
+  subTitle: string;
+  path: string;
+  color: string;
+}
+
+const Header: React.FC = () => {
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [isScrolled, setIsScrolled] = useState<boolean>(false);
+  const [isCategoryOpen, setIsCategoryOpen] = useState<boolean>(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated, nickname, logout } = useAuth();
 
-  const menuItems = [
+  const menuItems: MenuItem[] = [
     { name: "홈", path: "/" },
-    { name: "결제내역", path: "/payments" },
-    // { name: "구독", path: "/subscriptions" },
-    { name: "마이페이지", path: "/profile" },
-    { name: "티켓검증", path: "/ticket-verifier" },
+    { name: "주문/배송조회", path: "/payments" },
+    { name: "티켓검증", path: "/ticket-verifier" }
   ];
 
-  // Scroll effect
+  const categories: Category[] = [
+    {
+      name: "Electronics",
+      korName: "전자제품",
+      subTitle: "최신 디지털 기기",
+      path: "/category/electronics",
+      color: "from-purple-500 to-blue-500"
+    },
+    {
+      name: "Fashion",
+      korName: "패션",
+      subTitle: "트렌디한 패션 아이템",
+      path: "/category/fashion",
+      color: "from-purple-500 to-blue-500"
+    },
+    {
+      name: "Home & Living",
+      korName: "홈&리빙",
+      subTitle: "라이프스타일 제품",
+      path: "/category/home-living",
+      color: "from-purple-500 to-blue-500"
+    },
+    {
+      name: "Beauty",
+      korName: "뷰티",
+      subTitle: "프리미엄 뷰티 제품",
+      path: "/category/beauty",
+      color: "from-purple-500 to-blue-500"
+    },
+    {
+      name: "Sports",
+      korName: "스포츠",
+      subTitle: "스포츠 & 아웃도어",
+      path: "/category/sports",
+      color: "from-purple-500 to-blue-500"
+    },
+    {
+      name: "Books",
+      korName: "도서",
+      subTitle: "도서 & 문구류",
+      path: "/category/books",
+      color: "from-purple-500 to-blue-500"
+    }
+  ];
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
@@ -29,20 +87,17 @@ const Header = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close mobile menu when route changes
   useEffect(() => {
     setIsOpen(false);
   }, [location]);
 
-  // Smooth scroll to top when logo is clicked
-  const scrollToTop = (e: React.MouseEvent) => {
+  const scrollToTop = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     window.scrollTo({ top: 0, behavior: "smooth" });
     navigate("/");
   };
 
-  // Handle login/logout
-  const handleAuthClick = () => {
+  const handleAuthClick = (): void => {
     if (isAuthenticated) {
       logout();
     } else {
@@ -58,92 +113,79 @@ const Header = () => {
       transition={{ duration: 0.6, ease: "easeOut" }}
     >
       <div className="header-container">
-        {/* Logo */}
         <Link to="/" className="logo" onClick={scrollToTop}>
           XPay
         </Link>
 
-        {/* PC Navigation */}
         <nav className="menu-pc">
-          {menuItems.map((item, index) => (
-            <motion.div
-              key={item.path}
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-            >
-              <NavLink
-                to={item.path}
-                className={({ isActive }) =>
-                  `menu-link ${isActive ? "active" : ""}`
-                }
+          <NavLink
+            to="/"
+            className={({ isActive }) => `menu-link ${isActive ? "active" : ""}`}
+          >
+            홈
+          </NavLink>
+
+          <div
+            className="category-dropdown"
+            onMouseEnter={() => setIsCategoryOpen(true)}
+            onMouseLeave={() => setIsCategoryOpen(false)}
+          >
+            <span className="menu-link category-trigger">
+              카테고리
+              <motion.span
+                className="category-arrow"
+                animate={{ rotate: isCategoryOpen ? 180 : 0 }}
+                transition={{ duration: 0.2 }}
               >
-                {item.name}
-              </NavLink>
-            </motion.div>
+                ▼
+              </motion.span>
+            </span>
+
+            <AnimatePresence>
+              {isCategoryOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <CategoryDropdown />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {menuItems.slice(1).map((item, index) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              className={({ isActive }) => `menu-link ${isActive ? "active" : ""}`}
+            >
+              {item.name}
+            </NavLink>
           ))}
         </nav>
 
-        {/* Action Buttons */}
         <div className="nav-actions">
-          <motion.button
-            className="nav-button"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            🔍
-          </motion.button>
-          <motion.button
-            className="nav-button"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            ❤️
-          </motion.button>
-          <motion.button
-            className="nav-button"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            🛒
-          </motion.button>
-          <motion.button
-            className="nav-button primary"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleAuthClick}
-          >
+          <motion.button className="nav-button">🔍</motion.button>
+          <motion.button className="nav-button">❤️</motion.button>
+          <motion.button className="nav-button">🛒</motion.button>
+          <motion.button className="nav-button primary" onClick={handleAuthClick}>
             {isAuthenticated ? `${nickname} 님` : "로그인"}
           </motion.button>
           {isAuthenticated && (
-            <motion.button
-              className="nav-button"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={logout}
-            >
-              로그아웃
-            </motion.button>
+            <motion.button className="nav-button" onClick={() => navigate("/profile")}>마이페이지</motion.button>
           )}
+          {isAuthenticated && <motion.button className="nav-button">쿠폰</motion.button>}
         </div>
 
-        {/* Mobile Menu Button */}
-        <motion.button
-          className="menu-btn"
-          onClick={() => setIsOpen(!isOpen)}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-        >
-          <motion.span
-            animate={{ rotate: isOpen ? 45 : 0 }}
-            transition={{ duration: 0.3 }}
-          >
+        <motion.button className="menu-btn" onClick={() => setIsOpen(!isOpen)}>
+          <motion.span animate={{ rotate: isOpen ? 45 : 0 }} transition={{ duration: 0.3 }}>
             {isOpen ? "✖" : "☰"}
           </motion.span>
         </motion.button>
       </div>
 
-      {/* Mobile Menu */}
       <AnimatePresence>
         {isOpen && (
           <motion.nav
@@ -155,22 +197,15 @@ const Header = () => {
           >
             <ul>
               {menuItems.map((item, index) => (
-                <motion.li
-                  key={item.path}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.3, delay: index * 0.1 }}
-                >
+                <li key={item.path}>
                   <NavLink
                     to={item.path}
-                    className={({ isActive }) =>
-                      `menu-link ${isActive ? "active" : ""}`
-                    }
+                    className={({ isActive }) => `menu-link ${isActive ? "active" : ""}`}
                     onClick={() => setIsOpen(false)}
                   >
                     {item.name}
                   </NavLink>
-                </motion.li>
+                </li>
               ))}
             </ul>
           </motion.nav>

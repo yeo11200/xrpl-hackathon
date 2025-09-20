@@ -1,0 +1,39 @@
+/* 카테고리 2단 드롭다운 전체 컨테이너 */
+.category-dropdown-menu-2col {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  display: flex;
+  width: 200px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  z-index: 1001;
+  padding: 8px 0;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+
+/* 좌측 대분류 영역 */
+.category-menu-left {
+  width: 180px;
+  border-right: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+}
+
+.category-left-item {
+  padding: 12px 16px;
+  font-size: 14px;
+  color: #555;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.category-left-item:hover,
+.category-left-item.active {
+  background-color: #f6f6f6;
+  color: #000;
+  font-weight: 600;
+}
+

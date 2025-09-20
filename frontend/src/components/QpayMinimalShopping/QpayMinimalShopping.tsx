@@ -19,7 +19,7 @@ const QpayMinimalShopping = () => {
     {
       id: 2,
       name: "Ultra-thin Laptop",
-      originalPrice: convertXrpToKrw(30),
+      originalPrice: 1800000,
       salePrice: 1350000,
       discount: "25% OFF",
       description:

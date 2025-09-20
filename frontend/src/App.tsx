@@ -16,6 +16,7 @@ import { initXrplClient } from "./utils/xrpl-client";
 import { SellerPage } from "./pages/SellerPage";
 import { QpayMinimalShoppingPage } from "./pages/QpayMinimalShoppingPage";
 import { MyPage } from "./pages/MyPage";
+import { CryptoPriceProvider } from "./contexts/CryptoPriceContext";
 
 // 페이지 컴포넌트 예시
 const PageWrapper = ({ children }: { children: React.ReactNode }) => {
@@ -66,19 +67,21 @@ function App() {
 
   return (
     <AuthProvider>
-      <TransactionDetailProvider>
-        <Router>
-          <div className="min-h-screen bg-gray-50 text-gray-900">
-            <Header />
+      <CryptoPriceProvider>
+        <TransactionDetailProvider>
+          <Router>
+            <div className="min-h-screen bg-gray-50 text-gray-900">
+              <Header />
 
-            <main>
-              <section className="w-full md:w-3/4">
-                <AnimatedRoutes />
-              </section>
-            </main>
-          </div>
-        </Router>
-      </TransactionDetailProvider>
+              <main>
+                <section className="w-full md:w-3/4">
+                  <AnimatedRoutes />
+                </section>
+              </main>
+            </div>
+          </Router>
+        </TransactionDetailProvider>
+      </CryptoPriceProvider>
     </AuthProvider>
   );
 }

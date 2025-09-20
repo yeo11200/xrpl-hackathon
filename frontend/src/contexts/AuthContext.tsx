@@ -10,7 +10,9 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [nickname, setNickname] = useState<string | null>(null);
-  const [xrplAccount, setXrplAccount] = useState<XRPLAccount | null>(null);
+  const [xrplAccount, setXrplAccount] = useState<XRPLAccount | null>(
+    JSON.parse(localStorage.getItem("xrpl_account")) || null
+  );
 
   // 로컬 스토리지에서 로그인 상태 복원
   useEffect(() => {
@@ -41,6 +43,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsAuthenticated(false);
     localStorage.removeItem("userNickname");
     localStorage.removeItem("xrpl_account");
+    localStorage.removeItem("xrpl_seed"); // SEED도 함께 제거
   };
 
   const contextValue = {

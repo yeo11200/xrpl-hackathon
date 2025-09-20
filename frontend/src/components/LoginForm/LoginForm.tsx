@@ -2,7 +2,11 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "../../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import { createXRPLAccount } from "../../service/account.service";
+import {
+  createXRPLAccount,
+  getXRPLAccountByAddress,
+} from "../../service/account.service";
+import { acceptCredential } from "../../service/credential.service";
 import "./LoginForm.css";
 
 const LoginForm: React.FC = () => {
@@ -29,11 +33,26 @@ const LoginForm: React.FC = () => {
 
     setIsLoading(true);
     try {
-      // XRPL 계정 생성
+      // 1. XRPL 계정 생성
       const account = await createXRPLAccount(trimmedNickname);
 
-      // 로그인 처리 (계정 정보도 함께 전달)
-      login(trimmedNickname, account);
+      // 2. 생성된 주소로 계정 조회하여 SEED 받기
+      const accountWithSeed = await getXRPLAccountByAddress(account.address);
+
+      // 3. 받은 SEED로 자격증명 수락
+      try {
+        await acceptCredential({
+          subjectSeed: accountWithSeed.secret,
+          issuerAddress: accountWithSeed.address,
+          credentialType: "BasicCredential",
+        });
+      } catch (credentialError) {
+        console.error("자격증명 수락 실패:", credentialError);
+        // 자격증명 수락 실패는 로그인 진행에 영향을 주지 않음
+      }
+
+      // 로그인 처리 (SEED가 포함된 계정 정보 전달)
+      login(trimmedNickname, accountWithSeed);
       navigate("/");
     } catch (error) {
       console.error("계정 생성 실패:", error);

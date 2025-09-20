@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "../../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { createXRPLAccount } from "../../service/account.service";
 import "./LoginForm.css";
 
 const LoginForm: React.FC = () => {
@@ -23,16 +24,23 @@ const LoginForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nickname.trim()) return;
+    const trimmedNickname = nickname.trim();
+    if (!trimmedNickname) return;
 
     setIsLoading(true);
+    try {
+      // XRPL 계정 생성
+      const account = await createXRPLAccount(trimmedNickname);
 
-    // 로딩 애니메이션을 위한 딜레이
-    setTimeout(() => {
-      login(nickname.trim());
+      // 로그인 처리 (계정 정보도 함께 전달)
+      login(trimmedNickname, account);
       navigate("/");
+    } catch (error) {
+      console.error("계정 생성 실패:", error);
+      alert("계정 생성에 실패했습니다. 다시 시도해주세요.");
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (

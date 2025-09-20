@@ -9,7 +9,7 @@ body {
 
 /* 헤더 높이만큼 상단 여백 추가 */
 .page-container {
-  padding-top: 80px; /* 헤더 높이 + 여백 */
+  padding-top: 70px; /* 헤더 높이 + 여백 */
   min-height: 100vh;
 }
 

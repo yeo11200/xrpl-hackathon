@@ -1,40 +1,44 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useAuth } from "../../hooks/useAuth";
+import {
+  type XRPLAccount,
+  getXRPLAccountByAddress,
+} from "../../service/account.service";
 import "./MyPage.css";
 
-interface XRPLAccount {
-  address: string;
-  secret: string;
-  publicKey: string;
-  privateKey: string;
-  balance: number;
-  balanceXRP: number;
-  userId: string;
-  createdAt: string;
-  updatedAt: string;
-  sequence: number;
-  ownerCount: number;
-  flags: number;
-}
-
 const MyPage = () => {
-  // 더미 데이터
-  const accountData: XRPLAccount = {
-    address: "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
-    secret: "snoPBrXtMeMyMHUVTgbuqAfg1SUTb",
-    publicKey:
-      "ED5F5AC8B98974A3CA843326D9B88CEBD0560177B973EE0B149F782CFAA06DC66A",
-    privateKey:
-      "EDB4C4E046826BD26190D09715FC31F4E6A728204EADD112905B08B14B7F15C4",
-    balance: 1000000000,
-    balanceXRP: 1000,
-    userId: "satoshi",
-    createdAt: "2024-03-15T09:00:00Z",
-    updatedAt: "2024-03-15T09:30:00Z",
-    sequence: 1337,
-    ownerCount: 5,
-    flags: 0,
+  const { xrplAccount } = useAuth();
+  const [accountData, setAccountData] = useState<XRPLAccount | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showSecrets, setShowSecrets] = useState(false);
+
+  // 계정 정보 로드
+  const loadAccountData = async () => {
+    if (!xrplAccount?.address) {
+      setError("계정 주소가 없습니다.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getXRPLAccountByAddress(xrplAccount.address);
+      setAccountData(data);
+    } catch (err) {
+      console.error("계정 정보 로드 실패:", err);
+      setError("계정 정보를 불러오는데 실패했습니다.");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    loadAccountData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [xrplAccount?.address]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
@@ -43,6 +47,27 @@ const MyPage = () => {
   const formatBalance = (balance: number) => {
     return balance.toLocaleString();
   };
+
+  if (loading) {
+    return (
+      <div className="mypage-container">
+        <div className="loading-spinner">로딩 중...</div>
+      </div>
+    );
+  }
+
+  if (error || !accountData) {
+    return (
+      <div className="mypage-container">
+        <div className="error-message">
+          {error || "계정 정보를 불러올 수 없습니다."}
+          <button onClick={loadAccountData} className="retry-btn">
+            다시 시도
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mypage-container">
@@ -63,6 +88,9 @@ const MyPage = () => {
           <span className="balance-drops">
             ({formatBalance(accountData.balance)} drops)
           </span>
+          <button onClick={loadAccountData} className="refresh-btn">
+            🔄 새로고침
+          </button>
         </div>
       </motion.div>
 
@@ -81,9 +109,10 @@ const MyPage = () => {
                 <span className="value address">{accountData.address}</span>
                 <button
                   className="copy-btn"
-                  onClick={() =>
-                    navigator.clipboard.writeText(accountData.address)
-                  }
+                  onClick={() => {
+                    navigator.clipboard.writeText(accountData.address);
+                    alert("주소가 복사되었습니다.");
+                  }}
                 >
                   복사
                 </button>
@@ -96,9 +125,10 @@ const MyPage = () => {
                 <span className="value">{accountData.publicKey}</span>
                 <button
                   className="copy-btn"
-                  onClick={() =>
-                    navigator.clipboard.writeText(accountData.publicKey)
-                  }
+                  onClick={() => {
+                    navigator.clipboard.writeText(accountData.publicKey);
+                    alert("공개키가 복사되었습니다.");
+                  }}
                 >
                   복사
                 </button>
@@ -137,10 +167,19 @@ const MyPage = () => {
               <label>시크릿 키</label>
               <div className="value-container">
                 <span className="value secret">
-                  {accountData.secret.slice(0, 8)}...
-                  {accountData.secret.slice(-8)}
+                  {showSecrets
+                    ? accountData.secret
+                    : `${accountData.secret.slice(
+                        0,
+                        8
+                      )}...${accountData.secret.slice(-8)}`}
                 </span>
-                <button className="reveal-btn">보기</button>
+                <button
+                  className="reveal-btn"
+                  onClick={() => setShowSecrets(!showSecrets)}
+                >
+                  {showSecrets ? "숨기기" : "보기"}
+                </button>
               </div>
             </div>
 
@@ -148,10 +187,19 @@ const MyPage = () => {
               <label>개인키</label>
               <div className="value-container">
                 <span className="value secret">
-                  {accountData.privateKey.slice(0, 8)}...
-                  {accountData.privateKey.slice(-8)}
+                  {showSecrets
+                    ? accountData.privateKey
+                    : `${accountData.privateKey.slice(
+                        0,
+                        8
+                      )}...${accountData.privateKey.slice(-8)}`}
                 </span>
-                <button className="reveal-btn">보기</button>
+                <button
+                  className="reveal-btn"
+                  onClick={() => setShowSecrets(!showSecrets)}
+                >
+                  {showSecrets ? "숨기기" : "보기"}
+                </button>
               </div>
             </div>
           </div>

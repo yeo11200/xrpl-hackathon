@@ -44,6 +44,7 @@ const fetchApi = async <T>(
     // Base URL과 endpoint 결합
     const fullUrl = `${externalUrl}${endpoint}${queryString}`;
 
+    console.log("fullUrl", fullUrl);
     const response = await fetch(fullUrl, {
       method,
       headers,

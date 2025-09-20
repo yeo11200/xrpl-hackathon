@@ -1,9 +1,11 @@
 import React from "react";
 import "./QpayMinimalShopping.css";
 import { useCryptoPrice } from "../../hooks/useCryptoPrice";
+import { useNavigate } from "react-router-dom";
 
 const QpayMinimalShopping = () => {
   const { convertXrpToKrw } = useCryptoPrice();
+  const navigate = useNavigate();
   // Products data
   const products = [
     {
@@ -88,7 +90,11 @@ const QpayMinimalShopping = () => {
           <h2 className="section-title">FEATURED</h2>
           <div className="products-grid">
             {products.map((product) => (
-              <div key={product.id} className="product-item">
+              <div
+                key={product.id}
+                className="product-item"
+                onClick={() => navigate(`/product/${product.id}`)}
+              >
                 <div className="product-image">
                   {product.icon}
                   <div className="discount-badge">{product.discount}</div>

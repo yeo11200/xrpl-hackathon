@@ -41,6 +41,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsAuthenticated(false);
     localStorage.removeItem("userNickname");
     localStorage.removeItem("xrpl_account");
+    localStorage.removeItem("xrpl_seed"); // SEED도 함께 제거
   };
 
   const contextValue = {

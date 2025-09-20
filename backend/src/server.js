@@ -30,29 +30,29 @@ app.use(helmet({
   contentSecurityPolicy: false,  // apiDoc 호환성을 위해 CSP 비활성화
 }));
 
-// CORS 설정: 개발은 localhost 전 포트 허용, 운영은 화이트리스트 사용
-const devOriginRegex = /^https?:\/\/(localhost|127\.0\.0\.1)(:\\d+)?$/;
-const prodWhitelist = (process.env.CORS_ORIGINS || "https://yourdomain.com")
-  .split(",")
-  .map((o) => o.trim())
-  .filter(Boolean);
+// // CORS 설정: 개발은 localhost 전 포트 허용, 운영은 화이트리스트 사용
+// const devOriginRegex = /^https?:\/\/(localhost|127\.0\.0\.1)(:\\d+)?$/;
+// const prodWhitelist = (process.env.CORS_ORIGINS || "https://yourdomain.com")
+//   .split(",")
+//   .map((o) => o.trim())
+//   .filter(Boolean);
 
-/** @type {import('cors').CorsOptions} */
-const corsOptions = {
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true); // 서버-서버/헬스체크 등 Origin 없음 허용
-    if (!isProduction && devOriginRegex.test(origin)) return callback(null, true);
-    if (isProduction && prodWhitelist.includes(origin)) return callback(null, true);
-    return callback(null, false);
-  },
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true,
-  optionsSuccessStatus: 204,
-};
+// /** @type {import('cors').CorsOptions} */
+// const corsOptions = {
+//   origin: (origin, callback) => {
+//     if (!origin) return callback(null, true); // 서버-서버/헬스체크 등 Origin 없음 허용
+//     if (!isProduction && devOriginRegex.test(origin)) return callback(null, true);
+//     if (isProduction && prodWhitelist.includes(origin)) return callback(null, true);
+//     return callback(null, false);
+//   },
+//   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+//   allowedHeaders: ["Content-Type", "Authorization"],
+//   credentials: true,
+//   optionsSuccessStatus: 204,
+// };
 
-app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
+// app.use(cors(corsOptions));
+// app.options("*", cors(corsOptions));
 
 // Rate limiting
 const limiter = rateLimit({

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../../hooks/useAuth";
-import CategoryDropdown from "./CategoryDropdown";
+import CategoryDropdown from "./Category";
 import "./Header.css";
 
 interface MenuItem {

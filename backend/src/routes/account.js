@@ -5,6 +5,8 @@ const logger = require("../utils/logger");
 
 const router = express.Router();
 
+const { supabase } = require("../services/supabaseClient");
+
 
 // 새 계정 생성
 /**
@@ -90,6 +92,56 @@ router.post("/create",
     }
   }
 );
+
+// 닉네임으로 로그인(주소 조회)
+/**
+ * @api {get} /api/account/login/:nickname 01-1. 닉네임으로 주소 조회 (로그인)
+ * @apiName LoginByNickname
+ * @apiGroup Account
+ * @apiDescription Supabase accounts 테이블에서 닉네임(user_id)으로 주소를 조회합니다.
+ *
+ * @apiParam {String} nickname 사용자 닉네임
+ *
+ * @apiSuccess {Boolean} success 요청 성공 여부
+ * @apiSuccess {Object} data 조회 결과
+ * @apiSuccess {String} data.address XRPL 계정 주소
+ * @apiSuccess {String} data.userId 사용자 닉네임
+ *
+ * @apiErrorExample {json} Not-Found:
+ * HTTP/1.1 404 Not Found
+ * {
+ *   "success": false,
+ *   "error": "Account not found"
+ * }
+ */
+router.get("/login/:nickname", async (req, res, next) => {
+  try {
+    const { nickname } = req.params;
+    if (!nickname || typeof nickname !== "string") {
+      return res.status(400).json({ success: false, error: "Invalid nickname" });
+    }
+
+    const { data: row, error } = await supabase
+      .from('accounts')
+      .select('address,user_id')
+      .ilike('user_id', nickname)
+      .maybeSingle();
+
+    if (error) {
+      return res.status(500).json({ success: false, error: error.message });
+    }
+    if (!row) {
+      return res.status(404).json({ success: false, error: 'Account not found' });
+    }
+
+    return res.json({
+      success: true,
+      data: { address: row.address, userId: row.user_id }
+    });
+  } catch (err) {
+    return next(err);
+  }
+});
 
 // 계정 정보 조회
 /**
@@ -307,12 +359,12 @@ router.get("/balance/:address", async (req, res) => {
  */
 router.get("/", async (req, res, next) => {
   try {
-    const accounts = accountService.getAllStoredAccounts();
+    const accounts = await accountService.getAllStoredAccounts();
     res.json({
       success: true,
       data: {
         accounts,
-        count: accounts.length,
+        count: Array.isArray(accounts) ? accounts.length : 0,
       },
     });
   } catch (error) {
@@ -392,20 +444,30 @@ router.post("/:address/send",
       const { address } = req.params;
       const { toAddress, amount } = req.body;
 
-      // 저장된 계정 정보 조회
-      const storedAccount = accountService.getStoredAccount(address);
-      if (!storedAccount) {
-        return res.status(404).json({
-          success: false,
-          error: "Account not found in storage",
-        });
+      // 1) DB에 송신자 주소가 존재하는지 검증
+      const { data: accountRow, error: dbError } = await supabase
+        .from('accounts')
+        .select('address,user_id,secret')
+        .eq('address', address)
+        .maybeSingle();
+      if (dbError) {
+        return res.status(500).json({ success: false, error: dbError.message });
+      }
+      if (!accountRow) {
+        return res.status(404).json({ success: false, error: 'Account not found in database' });
+      }
+
+      // 2) DB에서 시크릿 확보 (개발 단계 저장 가정). 없으면 요청 본문에서 대체
+      const secret = accountRow.secret || req.body?.secret;
+      if (!secret) {
+        return res.status(404).json({ success: false, error: 'Secret not available for this address' });
       }
 
       const txRequest = {
         fromAddress: address,
         toAddress,
         amount: parseFloat(amount),
-        secret: storedAccount.secret,
+        secret,
       };
 
       const result = await accountService.sendPayment(txRequest);

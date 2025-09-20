@@ -30,7 +30,7 @@ const PaymentHistory = () => {
   const mockTransactions: PaymentTransaction[] = [
     {
       id: "1",
-      hash: "E3FE6EA3D48F0C2B63448B8C05F8D5F8B1C85F9A2D8C6B3E4F7A1B2C3D4E5F6G",
+      hash: "BAB03AE4FF348E0AD10CE805BF063A0B7AC59211F3063D91C32E1ACD1D88ED75",
       type: "purchase",
       productName: "VIP 콘서트 티켓",
       amount: 120000,
@@ -42,7 +42,7 @@ const PaymentHistory = () => {
     },
     {
       id: "2",
-      hash: "A1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q7R8S9T0U1V2W3X4Y5Z6A7B8C9D0E1F2",
+      hash: "74B60D1778F2F11E957E03D740DC5D75D798B2063992ED76D7C656DE6CA69C19",
       type: "transfer",
       amount: 50000,
       currency: "XRP",
@@ -53,7 +53,7 @@ const PaymentHistory = () => {
     },
     {
       id: "3",
-      hash: "Z9Y8X7W6V5U4T3S2R1Q0P9O8N7M6L5K4J3I2H1G0F9E8D7C6B5A4Z3Y2X1W0V9U8",
+      hash: "8BAF3EB4EC90569D168294ACDCB3664BCBCDA8A8B405631A9B478F11A2DC03D1",
       type: "purchase",
       productName: "온라인 세미나 입장권",
       amount: 60000,
@@ -65,7 +65,7 @@ const PaymentHistory = () => {
     },
     {
       id: "4",
-      hash: "M5N6O7P8Q9R0S1T2U3V4W5X6Y7Z8A9B0C1D2E3F4G5H6I7J8K9L0M1N2O3P4Q5R6",
+      hash: "58C468652A30CFB401FEC19877109891B44066645467FF59B6CE66B780435587",
       type: "refund",
       productName: "워크샵 참가권",
       amount: 25000,
@@ -77,7 +77,7 @@ const PaymentHistory = () => {
     },
     {
       id: "5",
-      hash: "M5N6O7P8Q9R0S1T2U3V4W5X6Y7Z8A9B0C1D2E3F4G5H6I7J8K9L0M1N2O3P4Q5R6",
+      hash: "5A37E18C1F9CE865E3F36FC497C97D68D947C1A04E7FDFF369144B3B988ECB72",
       type: "delivery",
       productName: "워크샵 참가권",
       amount: 25000,
@@ -226,7 +226,11 @@ const PaymentHistory = () => {
               <motion.button
                 key={tab.key}
                 className={`filter-tab ${filter === tab.key ? "active" : ""}`}
-                onClick={() => setFilter(tab.key as any)}
+                onClick={() =>
+                  setFilter(
+                    tab.key as "all" | "purchase" | "refund" | "transfer"
+                  )
+                }
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8 + index * 0.1, duration: 0.4 }}

@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import "./TicketQRCodePopup.css";
+import { useXrplSocket } from "../../hooks/useXRPL";
 
 interface QRData {
   buyerAddress: string;
@@ -16,6 +17,14 @@ interface Props {
 }
 
 const TicketQRCodePopup: React.FC<Props> = ({ isOpen, onClose, qrData }) => {
+  const { txEvent } = useXrplSocket("rQNM25EskMULu6niBm2yyzziAfRzuvb8xA");
+
+  useEffect(() => {
+    if (txEvent) {
+      onClose();
+    }
+  }, [txEvent, onClose]);
+
   if (!isOpen) return null;
 
   const qrValue = JSON.stringify(qrData);

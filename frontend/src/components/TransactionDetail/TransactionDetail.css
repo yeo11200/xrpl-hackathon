@@ -1,0 +1,346 @@
+/* Transaction Detail Modal - QpayMinimal Style */
+.transaction-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.transaction-modal-content {
+  background: #fff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Header */
+.transaction-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30px 30px 20px;
+  border-bottom: 1px solid #f0f0f0;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 20px 20px 0 0;
+}
+
+.transaction-modal-header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #000;
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+.modal-close-btn {
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: #666;
+  padding: 8px;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.modal-close-btn:hover {
+  background: #fff;
+  color: #333;
+  transform: scale(1.1);
+}
+
+/* Body */
+.transaction-modal-body {
+  padding: 30px;
+}
+
+/* Loading Section */
+.loading-section {
+  text-align: center;
+  padding: 60px 0;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e1e8ed;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  margin: 0 auto 20px;
+}
+
+.loading-section p {
+  color: #666;
+  font-size: 1.1rem;
+}
+
+/* Error Section */
+.error-section {
+  text-align: center;
+  padding: 40px 0;
+}
+
+.error-icon {
+  font-size: 3rem;
+  margin-bottom: 20px;
+}
+
+.error-section h3 {
+  font-size: 1.3rem;
+  color: #e74c3c;
+  margin-bottom: 10px;
+}
+
+.error-section p {
+  color: #666;
+  line-height: 1.6;
+}
+
+/* Transaction Details */
+.transaction-details {
+  space-y: 30px;
+}
+
+/* Status Section */
+.status-section {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 25px;
+  color: #fff;
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.5px;
+}
+
+.status-icon {
+  font-size: 1.1rem;
+}
+
+/* Info Sections */
+.info-section {
+  margin-bottom: 30px;
+  background: #f8f9fa;
+  border-radius: 15px;
+  padding: 25px;
+  border-left: 4px solid #667eea;
+}
+
+.info-section h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.info-grid {
+  display: grid;
+  gap: 15px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.info-item:last-child {
+  border-bottom: none;
+}
+
+.info-item label {
+  font-weight: 600;
+  color: #555;
+  min-width: 120px;
+  flex-shrink: 0;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-item span {
+  color: #333;
+  text-align: right;
+  flex: 1;
+  word-break: break-all;
+  line-height: 1.4;
+}
+
+/* Special Value Styles */
+.hash-value {
+  font-family: "Courier New", monospace;
+  font-size: 0.8rem;
+  background: rgba(102, 126, 234, 0.1);
+  padding: 6px 10px;
+  border-radius: 6px;
+  color: #667eea !important;
+  word-break: break-all;
+  line-height: 1.4;
+}
+
+.address-value {
+  font-family: "Courier New", monospace;
+  font-size: 0.85rem;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 4px 8px;
+  border-radius: 4px;
+  word-break: break-all;
+  line-height: 1.4;
+}
+
+/* Amount Display */
+.amount-display {
+  text-align: center;
+  padding: 20px;
+  background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  color: #fff;
+}
+
+.amount-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+/* Meta Info */
+.meta-info {
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 10px;
+  padding: 20px;
+}
+
+/* Action Section */
+.action-section {
+  display: flex;
+  gap: 15px;
+  margin-top: 30px;
+  padding-top: 25px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.action-btn {
+  flex: 1;
+  padding: 14px 20px;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: inherit;
+}
+
+.action-btn.primary {
+  background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+}
+
+.action-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+}
+
+.action-btn.secondary {
+  background: #f8f9fa;
+  color: #666;
+  border: 1px solid #e1e8ed;
+}
+
+.action-btn.secondary:hover {
+  background: #e9ecef;
+  color: #333;
+  transform: translateY(-1px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .transaction-modal-content {
+    margin: 10px;
+    max-height: 95vh;
+  }
+
+  .transaction-modal-header,
+  .transaction-modal-body {
+    padding: 20px;
+  }
+
+  .transaction-modal-header h2 {
+    font-size: 1.3rem;
+  }
+
+  .info-section {
+    padding: 20px;
+  }
+
+  .info-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .info-item span {
+    text-align: left;
+  }
+
+  .action-section {
+    flex-direction: column;
+  }
+
+  .amount-value {
+    font-size: 1.5rem;
+  }
+
+  .hash-value {
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .transaction-modal-header,
+  .transaction-modal-body {
+    padding: 15px;
+  }
+
+  .info-section {
+    padding: 15px;
+  }
+
+  .status-badge {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+  }
+
+  .amount-value {
+    font-size: 1.3rem;
+  }
+}

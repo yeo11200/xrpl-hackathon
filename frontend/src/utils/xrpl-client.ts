@@ -11,9 +11,16 @@ export const initXrplClient = async () => {
   return client;
 };
 
+export const getXrplClient = async (): Promise<Client> => {
+  if (!client || !client.isConnected()) {
+    return await initXrplClient();
+  }
+  return client;
+};
+
 export const subscribeToAccount = async (
   address: string,
-  onEvent: (event) => void
+  onEvent: (event: unknown) => void
 ) => {
   const c = await initXrplClient();
   await c.request({

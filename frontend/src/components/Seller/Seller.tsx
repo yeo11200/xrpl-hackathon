@@ -1,104 +1,140 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import "./Seller.css";
+import { useTransactionDetail } from "../../hooks/useTransactionDetail";
 
-type Transaction = {
-  id: string;
-  productName: string;
-  buyerAddress: string;
-  amount: number;
-  status: "pending" | "paid" | "refunded";
-};
+interface Product {
+  id: number;
+  name: string;
+  price: number;
+  quantity: number;
+  status: string;
+  date: string;
+}
 
 const Seller = () => {
-  const [transactions, setTransactions] = useState<Transaction[]>([
-    {
-      id: "1",
-      productName: "VIP 콘서트 티켓",
-      buyerAddress: "rABC123...XYZ",
-      amount: 100,
-      status: "paid",
-    },
-    {
-      id: "2",
-      productName: "굿즈 패키지",
-      buyerAddress: "rDEF456...XYZ",
-      amount: 50,
-      status: "pending",
-    },
-    {
-      id: "3",
-      productName: "온라인 강의권",
-      buyerAddress: "rGHI789...XYZ",
-      amount: 20,
-      status: "refunded",
-    },
-  ]);
+  const { openTransactionDetail } = useTransactionDetail();
+  const [toast, setToast] = useState({ show: false, message: "" });
 
-  const [toastOpen, setToastOpen] = useState(false);
+  const showToast = (message: string) => {
+    setToast({ show: true, message });
+    setTimeout(() => setToast({ show: false, message: "" }), 3000);
+  };
+  const products: Product[] = [
+    {
+      id: 1,
+      name: "VIP 콘서트 티켓",
+      price: 150000,
+      quantity: 50,
+      status: "판매중",
+      date: "2024-03-15",
+    },
+    {
+      id: 2,
+      name: "고급 세미나 입장권",
+      price: 80000,
+      quantity: 30,
+      status: "판매중",
+      date: "2024-03-14",
+    },
+    {
+      id: 3,
+      name: "프리미엄 워크샵",
+      price: 200000,
+      quantity: 20,
+      status: "매진",
+      date: "2024-03-13",
+    },
+    {
+      id: 4,
+      name: "스포츠 경기 티켓",
+      price: 100000,
+      quantity: 100,
+      status: "판매중",
+      date: "2024-03-12",
+    },
+  ];
 
-  const handleRefund = (id: string) => {
-    setTransactions((prev) =>
-      prev.map((tx) => (tx.id === id ? { ...tx, status: "refunded" } : tx))
-    );
-    setToastOpen(true);
-    setTimeout(() => setToastOpen(false), 3000);
+  const formatPrice = (price: number) => {
+    return `₩${price.toLocaleString()}`;
   };
 
   return (
-    <div className="seller-page">
-      <motion.h1
-        className="seller-title"
-        initial={{ opacity: 0, y: -10 }}
+    <div className="seller-container">
+      <motion.div
+        className="seller-header"
+        initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
+        transition={{ duration: 0.5 }}
       >
-        판매자 거래 내역
-      </motion.h1>
+        <h1>판매자 센터</h1>
+        <motion.button
+          className="new-product-btn"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          + 새 상품 등록
+        </motion.button>
+      </motion.div>
 
       <motion.div
-        className="table-wrapper"
+        className="seller-table-container"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
       >
         <table className="seller-table">
           <thead>
             <tr>
               <th>상품명</th>
-              <th>구매자 주소</th>
-              <th>금액</th>
+              <th>가격</th>
+              <th>수량</th>
               <th>상태</th>
-              <th>액션</th>
+              <th>등록일</th>
+              <th>관리</th>
             </tr>
           </thead>
           <tbody>
-            {transactions.map((tx) => (
+            {products.map((product, index) => (
               <motion.tr
-                key={tx.id}
-                initial={{ opacity: 0, y: 10 }}
+                key={product.id}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+                onClick={() =>
+                  openTransactionDetail(
+                    "F1C84318D299E7DA7F3A7A0D4A7599D12D3FE3A5EFCB4F8AFAD5B3973A5B0BF4"
+                  )
+                }
+                className="clickable-row"
               >
-                <td>{tx.productName}</td>
-                <td className="buyer">{tx.buyerAddress}</td>
-                <td>{tx.amount} XRP</td>
+                <td>{product.name}</td>
+                <td>{formatPrice(product.price)}</td>
+                <td>{product.quantity}</td>
                 <td>
-                  <span className={`status ${tx.status}`}>
-                    {tx.status === "pending" && "대기중"}
-                    {tx.status === "paid" && "결제완료"}
-                    {tx.status === "refunded" && "환불완료"}
+                  <span
+                    className={`status-badge ${
+                      product.status === "매진" ? "sold-out" : "on-sale"
+                    }`}
+                  >
+                    {product.status}
                   </span>
                 </td>
+                <td>{product.date}</td>
                 <td>
-                  {tx.status === "paid" && (
-                    <button
+                  <div className="action-buttons">
+                    <motion.button
                       className="refund-btn"
-                      onClick={() => handleRefund(tx.id)}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        showToast("환불 요청이 접수되었습니다.");
+                      }}
                     >
-                      환불하기
-                    </button>
-                  )}
+                      환불
+                    </motion.button>
+                  </div>
                 </td>
               </motion.tr>
             ))}
@@ -106,16 +142,16 @@ const Seller = () => {
         </table>
       </motion.div>
 
+      {/* Toast Notification */}
       <AnimatePresence>
-        {toastOpen && (
+        {toast.show && (
           <motion.div
             className="toast"
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 40 }}
-            transition={{ duration: 0.3 }}
+            exit={{ opacity: 0, y: 50 }}
           >
-            ✅ 환불이 완료되었습니다.
+            {toast.message}
           </motion.div>
         )}
       </AnimatePresence>

@@ -18,41 +18,44 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const isProduction = process.env.NODE_ENV === "production";
 
-// app.use('/api-docs', (req, res, next) => {
-//   res.removeHeader('Content-Security-Policy');
-//   next();
-// });
-// apiDoc 문서 서빙
-app.use('/api-docs', express.static(path.join(__dirname, '../apidoc')));
-
 // Security middleware
-app.use(helmet({
-  contentSecurityPolicy: false,  // apiDoc 호환성을 위해 CSP 비활성화
-}));
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "https:"],
+        connectSrc: ["'self'"],
+      },
+    },
+  })
+);
 
-// // CORS 설정: 개발은 localhost 전 포트 허용, 운영은 화이트리스트 사용
-// const devOriginRegex = /^https?:\/\/(localhost|127\.0\.0\.1)(:\\d+)?$/;
-// const prodWhitelist = (process.env.CORS_ORIGINS || "https://yourdomain.com")
-//   .split(",")
-//   .map((o) => o.trim())
-//   .filter(Boolean);
+// apiDoc 문서 서빙 (CSP 헤더 제거)
+app.use(
+  "/api-docs",
+  (req, res, next) => {
+    res.removeHeader("Content-Security-Policy");
+    next();
+  },
+  express.static(path.join(__dirname, "../apidoc"))
+);
 
-// /** @type {import('cors').CorsOptions} */
-// const corsOptions = {
-//   origin: (origin, callback) => {
-//     if (!origin) return callback(null, true); // 서버-서버/헬스체크 등 Origin 없음 허용
-//     if (!isProduction && devOriginRegex.test(origin)) return callback(null, true);
-//     if (isProduction && prodWhitelist.includes(origin)) return callback(null, true);
-//     return callback(null, false);
-//   },
-//   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-//   allowedHeaders: ["Content-Type", "Authorization"],
-//   credentials: true,
-//   optionsSuccessStatus: 204,
-// };
-
-// app.use(cors(corsOptions));
-// app.options("*", cors(corsOptions));
+app.use(
+  cors({
+    origin:
+      process.env.NODE_ENV === "production"
+        ? [process.env.FRONTEND_URL || "https://yourdomain.com"]
+        : [
+            "http://localhost:3000",
+            "http://localhost:3001",
+            "http://localhost:5173",
+          ],
+    credentials: true,
+  })
+);
 
 // Rate limiting
 const limiter = rateLimit({
@@ -141,4 +144,3 @@ process.on("SIGINT", () => {
 });
 
 module.exports = app;
-

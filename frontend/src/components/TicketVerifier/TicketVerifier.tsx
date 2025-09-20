@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import QrScanner from "qr-scanner";
-import fetchApi from "../../utils/fetch-api";
-import localStorageUtil from "../../utils/local-storage";
 import { motion } from "framer-motion";
+import { verifyPayment } from "../../service/account.service";
 import "./TicketVerifier.css";
 
 export type VerificationResponse = {

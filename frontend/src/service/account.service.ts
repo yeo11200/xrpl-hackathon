@@ -100,3 +100,36 @@ export const refreshXRPLAccount = async (
   );
   return response.data;
 };
+
+interface PaymentVerificationRequest {
+  amount: number;
+  products_id: number;
+}
+
+interface PaymentVerificationResponse {
+  success: boolean;
+  data: {
+    status: "success" | "failed";
+    message: string;
+    transactionHash?: string;
+  };
+}
+
+/**
+ * XRP 결제 검증
+ * @param address XRPL 주소
+ * @param data 결제 검증 데이터
+ */
+export const verifyPayment = async (
+  address: string,
+  data: PaymentVerificationRequest
+): Promise<PaymentVerificationResponse> => {
+  const response = await fetchApi<PaymentVerificationResponse>(
+    `/api/account/${address}/payment`,
+    {
+      method: "POST",
+      body: data,
+    }
+  );
+  return response;
+};

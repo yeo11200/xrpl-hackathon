@@ -10,10 +10,13 @@ const xrplRoutes = require("./routes/xrpl");
 const paymentRoutes = require("./routes/payment");
 const accountRoutes = require("./routes/account");
 const shopRoutes = require("./routes/shop");
+const credentialRoutes = require("./routes/credential");
 const errorHandler = require("./middleware/errorHandler");
+const { supabase } = require("./services/supabaseClient");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const isProduction = process.env.NODE_ENV === "production";
 
 // Supabase와 같은 프록시 사용 시 필요한 설정
 app.set("trust proxy", true);
@@ -113,12 +116,31 @@ app.get("/health", (req, res) => {
   });
 });
 
+/**
+ * @api {get} /db-health Supabase DB health check
+ * @apiName GetDBHealth
+ * @apiGroup Account
+ * @apiSuccess {String} status OK when connected
+ * @apiSuccess {String} details Additional info
+ */
+app.get("/db-health", async (req, res, next) => {
+	try {
+		const { data, error } = await supabase.rpc('healthcheck');
+		if (error) {
+			return res.status(500).json({ status: "ERROR", error: error.message });
+		}
+		return res.json({ status: data === true ? "OK" : "UNKNOWN" });
+	} catch (err) {
+		return next(err);
+	}
+});
+
 // API routes
 app.use("/api/xrpl", xrplRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/account", accountRoutes);
 app.use("/api/shop", shopRoutes);
-
+app.use("/api/credential", credentialRoutes);
 // 404 handler
 app.use("*", (req, res) => {
   res.status(404).json({

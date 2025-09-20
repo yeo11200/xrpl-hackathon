@@ -3,6 +3,7 @@ const router = express.Router();
 const paymentService = require("../services/paymentService");
 const accountService = require("../services/accountService");
 const cryptoPriceService = require("../services/cryptoPriceService");
+const shopService = require("../services/shopService"); // 추가
 const logger = require("../utils/logger");
 
 // 예시 상품 데이터 (실제로는 데이터베이스에서 관리)
@@ -143,60 +144,54 @@ router.get("/products", async (req, res) => {
   try {
     const { category, search, page = 1, limit = 10 } = req.query;
 
-    let filteredProducts = [...products];
+    // shopService를 통해 상품 조회
+    const { data: products, error: dbError, count } = await shopService.getProducts({
+      category,
+      search,
+      page: parseInt(page),
+      limit: parseInt(limit)
+    });
 
-    // 카테고리 필터링
-    if (category && category !== "all") {
-      filteredProducts = filteredProducts.filter(
-        (p) => p.category === category
-      );
+    if (dbError) {
+      return res.status(500).json({
+        success: false,
+        message: "상품 목록을 불러오는데 실패했습니다.",
+      });
     }
-
-    // 검색 필터링
-    if (search) {
-      const searchLower = search.toLowerCase();
-      filteredProducts = filteredProducts.filter(
-        (p) =>
-          p.name.toLowerCase().includes(searchLower) ||
-          p.description.toLowerCase().includes(searchLower)
-      );
-    }
-
-    // 페이지네이션
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + parseInt(limit);
-    const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
 
     // XRP 가격 정보 추가 (KRW -> XRP 변환)
     try {
       const xrpPriceInfo = await cryptoPriceService.getXrpPrice();
       const xrpPrice = xrpPriceInfo.currentPrice;
-      paginatedProducts.forEach((product) => {
-        product.priceXRP = (product.price / xrpPrice).toFixed(6); // KRW를 XRP로 변환
-        product.priceKRW = product.price; // 원래 KRW 가격 유지
+      
+      products.forEach((product) => {
+        product.priceXRP = (parseFloat(product.price) / xrpPrice).toFixed(6);
+        product.priceKRW = parseFloat(product.price);
       });
-      // 추가 시세 정보도 포함
-      paginatedProducts.xrpPriceInfo = xrpPriceInfo;
+      
+      products.xrpPriceInfo = xrpPriceInfo;
     } catch (error) {
       logger.warn("XRP 가격 정보를 가져올 수 없습니다:", error.message);
-      // XRP 가격을 가져올 수 없는 경우 대략적인 변환율 사용 (1 XRP = 1500 KRW)
-      paginatedProducts.forEach((product) => {
-        product.priceXRP = (product.price / 1500).toFixed(6);
-        product.priceKRW = product.price;
+      products.forEach((product) => {
+        product.priceXRP = (parseFloat(product.price) / 1500).toFixed(6);
+        product.priceKRW = parseFloat(product.price);
       });
     }
 
+    // 카테고리 목록 조회
+    const { data: categories } = await shopService.getCategories();
+
     res.json({
       success: true,
-      products: paginatedProducts,
+      products: products || [],
       pagination: {
         currentPage: parseInt(page),
-        totalPages: Math.ceil(filteredProducts.length / limit),
-        totalProducts: filteredProducts.length,
-        hasNext: endIndex < filteredProducts.length,
-        hasPrev: page > 1,
+        totalPages: Math.ceil((count || 0) / parseInt(limit)),
+        totalProducts: count || 0,
+        hasNext: (parseInt(page) * parseInt(limit)) < (count || 0),
+        hasPrev: parseInt(page) > 1,
       },
-      categories: [...new Set(products.map((p) => p.category))],
+      categories: categories || [],
     });
   } catch (error) {
     logger.error("상품 목록 조회 실패:", error);
@@ -230,27 +225,28 @@ router.get("/products", async (req, res) => {
 router.get("/products/:id", async (req, res) => {
   try {
     const productId = parseInt(req.params.id);
-    const product = products.find((p) => p.id === productId);
+    
+    // shopService를 통해 상품 상세 조회
+    const { data: product, error: dbError } = await shopService.getProductById(productId);
 
-    if (!product) {
+    if (dbError || !product) {
       return res.status(404).json({
         success: false,
         message: "상품을 찾을 수 없습니다.",
       });
     }
 
-    // XRP 가격 정보 추가 (KRW -> XRP 변환)
+    // XRP 가격 정보 추가
     try {
       const xrpPriceInfo = await cryptoPriceService.getXrpPrice();
       const xrpPrice = xrpPriceInfo.currentPrice;
-      product.priceXRP = (product.price / xrpPrice).toFixed(6); // KRW를 XRP로 변환
-      product.priceKRW = product.price; // 원래 KRW 가격 유지
-      product.xrpPriceInfo = xrpPriceInfo; // 상세 시세 정보 추가
+      product.priceXRP = (parseFloat(product.price) / xrpPrice).toFixed(6);
+      product.priceKRW = parseFloat(product.price);
+      product.xrpPriceInfo = xrpPriceInfo;
     } catch (error) {
       logger.warn("XRP 가격 정보를 가져올 수 없습니다:", error.message);
-      // XRP 가격을 가져올 수 없는 경우 대략적인 변환율 사용 (1 XRP = 1500 KRW)
-      product.priceXRP = (product.price / 1500).toFixed(6);
-      product.priceKRW = product.price;
+      product.priceXRP = (parseFloat(product.price) / 1500).toFixed(6);
+      product.priceKRW = parseFloat(product.price);
     }
 
     res.json({
@@ -288,7 +284,7 @@ router.get("/products/:id", async (req, res) => {
  * @apiSuccess {String} cart.createdAt 생성 시각
  * @apiSuccess {String} cart.updatedAt 갱신 시각
  */
-router.post("/cart/add", (req, res) => {
+router.post("/cart/add", async (req, res) => {
   try {
     const { productId, quantity = 1, sessionId } = req.body;
 
@@ -299,45 +295,22 @@ router.post("/cart/add", (req, res) => {
       });
     }
 
-    const product = products.find((p) => p.id === productId);
-    if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: "상품을 찾을 수 없습니다.",
-      });
-    }
-
-    if (product.stock < quantity) {
+    if (!productId || quantity <= 0) {
       return res.status(400).json({
         success: false,
-        message: "재고가 부족합니다.",
+        message: "유효한 상품 ID와 수량이 필요합니다.",
       });
     }
 
-    // 장바구니 가져오기 또는 생성
-    if (!carts.has(sessionId)) {
-      carts.set(sessionId, { items: [], createdAt: new Date().toISOString() });
-    }
+    // shopService를 통해 장바구니에 상품 추가
+    const { success, cart, error } = await shopService.addToCart(sessionId, productId, quantity);
 
-    const cart = carts.get(sessionId);
-    const existingItem = cart.items.find(
-      (item) => item.productId === productId
-    );
-
-    if (existingItem) {
-      existingItem.quantity += quantity;
-    } else {
-      cart.items.push({
-        productId,
-        name: product.name,
-        price: product.price,
-        quantity,
-        image: product.image,
+    if (!success) {
+      return res.status(400).json({
+        success: false,
+        message: error?.message || "장바구니에 상품을 추가하는데 실패했습니다.",
       });
     }
-
-    cart.updatedAt = new Date().toISOString();
-    carts.set(sessionId, cart);
 
     res.json({
       success: true,
@@ -373,34 +346,31 @@ router.post("/cart/add", (req, res) => {
 router.get("/cart/:sessionId", async (req, res) => {
   try {
     const { sessionId } = req.params;
-    const cart = carts.get(sessionId);
 
-    if (!cart) {
-      return res.json({
-        success: true,
-        cart: { items: [], totalItems: 0, totalAmount: 0 },
+    // shopService를 통해 장바구니 조회
+    const { data: cart, error } = await shopService.getCartBySessionId(sessionId);
+
+    if (error) {
+      logger.error("장바구니 조회 실패:", error);
+      return res.status(500).json({
+        success: false,
+        message: "장바구니를 불러오는데 실패했습니다.",
       });
     }
-
-    // 총 금액 계산
-    const totalAmount = cart.items.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0
-    );
-    const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0);
 
     // XRP 가격 정보 추가 (KRW -> XRP 변환)
     let xrpPriceInfo = null;
     let xrpPrice = null;
     let totalAmountXRP = null;
+    
     try {
       xrpPriceInfo = await cryptoPriceService.getXrpPrice();
       xrpPrice = xrpPriceInfo.currentPrice;
-      totalAmountXRP = (totalAmount / xrpPrice).toFixed(6); // KRW를 XRP로 변환
+      totalAmountXRP = (cart.totalAmountKRW / xrpPrice).toFixed(6);
     } catch (error) {
       logger.warn("XRP 가격 정보를 가져올 수 없습니다:", error.message);
       // 기본 변환율 사용 (1 XRP = 1500 KRW)
-      totalAmountXRP = (totalAmount / 1500).toFixed(6);
+      totalAmountXRP = (cart.totalAmountKRW / 1500).toFixed(6);
       xrpPrice = 1500;
     }
 
@@ -408,8 +378,6 @@ router.get("/cart/:sessionId", async (req, res) => {
       success: true,
       cart: {
         ...cart,
-        totalItems,
-        totalAmountKRW: totalAmount, // 장바구니 총액 (KRW)
         totalAmountXRP, // 장바구니 총액 (XRP)
         xrpPrice, // 현재 XRP 가격
         xrpPriceInfo, // XRP 상세 시세 정보
@@ -437,23 +405,19 @@ router.get("/cart/:sessionId", async (req, res) => {
  * @apiSuccess {String} message 결과 메시지
  * @apiSuccess {Object} cart 장바구니 정보
  */
-router.delete("/cart/:sessionId/item/:productId", (req, res) => {
+router.delete("/cart/:sessionId/item/:productId", async (req, res) => {
   try {
     const { sessionId, productId } = req.params;
-    const cart = carts.get(sessionId);
 
-    if (!cart) {
+    // shopService를 통해 장바구니에서 상품 제거
+    const { success, cart, error } = await shopService.removeCartItem(sessionId, parseInt(productId));
+
+    if (!success) {
       return res.status(404).json({
         success: false,
-        message: "장바구니를 찾을 수 없습니다.",
+        message: error?.message || "장바구니에서 상품을 제거하는데 실패했습니다.",
       });
     }
-
-    cart.items = cart.items.filter(
-      (item) => item.productId !== parseInt(productId)
-    );
-    cart.updatedAt = new Date().toISOString();
-    carts.set(sessionId, cart);
 
     res.json({
       success: true,
@@ -805,10 +769,16 @@ router.get("/orders/:address", async (req, res) => {
  */
 router.get("/stats", async (req, res) => {
   try {
-    const totalProducts = products.length;
+    // shopService를 통해 통계 조회
+    const { data: shopStats, error: statsError } = await shopService.getShopStats();
+    
+    if (statsError) {
+      throw statsError;
+    }
+
     const totalOrders = orders.size;
 
-    // 매출 계산 (KRW 기준과 XRP 기준 모두)
+    // 매출 계산 (기존 주문 데이터 기반)
     const paidOrders = Array.from(orders.values()).filter(
       (order) => order.status === "paid"
     );
@@ -832,12 +802,12 @@ router.get("/stats", async (req, res) => {
     res.json({
       success: true,
       stats: {
-        totalProducts,
+        totalProducts: shopStats?.totalProducts || 0,
         totalOrders,
-        totalRevenueKRW, // 실제 주문된 KRW 총액
-        totalRevenueXRP, // 실제 결제된 XRP 총액
-        categories: [...new Set(products.map((p) => p.category))],
-        currentXrpPriceInfo, // 현재 XRP 상세 가격 정보
+        totalRevenueKRW,
+        totalRevenueXRP,
+        categories: shopStats?.categories || [],
+        currentXrpPriceInfo,
       },
     });
   } catch (error) {

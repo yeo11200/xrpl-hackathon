@@ -12,7 +12,7 @@ import { TicketVerifierPage } from "./pages/TicketVerifierPage";
 import { LoginPage } from "./pages/LoginPage";
 import Header from "./components/Header";
 import { PaymentsPage } from "./pages/PaymentsPage";
-import { initXrplClient } from "./utils/xrpl-client";
+import { initXrplClient, subscribeToAccount } from "./utils/xrpl-client";
 import { SellerPage } from "./pages/SellerPage";
 import { QpayMinimalShoppingPage } from "./pages/QpayMinimalShoppingPage";
 import { MyPage } from "./pages/MyPage";
@@ -65,6 +65,7 @@ const AnimatedRoutes = () => {
 function App() {
   useEffect(() => {
     initXrplClient();
+    subscribeToAccount("rQNM25EskMULu6niBm2yyzziAfRzuvb8xA");
   }, []);
 
   return (

@@ -158,6 +158,10 @@ export default function ProductDetail() {
                   type="button"
                   className="buy-now-btn"
                   onClick={() => {
+                    if (!xrplAccount) {
+                      alert("지갑 연결이 필요합니다.");
+                      return;
+                    }
                     setShowQRPopup(true);
                   }}
                 >

@@ -1,48 +1,14 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import "./QpayMinimalShopping.css";
 import { useCryptoPrice } from "../../hooks/useCryptoPrice";
 import { useNavigate } from "react-router-dom";
-import {
-  type Product,
-  fetchProductList,
-} from "../../service/shop.service";
+import { type Product, fetchProductList } from "../../service/shop.service";
 
 const QpayMinimalShopping = () => {
   const { convertXrpToKrw } = useCryptoPrice();
   const navigate = useNavigate();
-  // Products data
-  const products = [
-    {
-      id: 1,
-      name: "Premium Smartphone",
-      originalPrice: convertXrpToKrw(1200000),
-      salePrice: 840000,
-      discount: "30% OFF",
-      description:
-        "최신 기술이 집약된 프리미엄 스마트폰. 뛰어난 성능과 세련된 디자인이 조화를 이룹니다.",
-      icon: "📱",
-    },
-    {
-      id: 2,
-      name: "Ultra-thin Laptop",
-      originalPrice: 1800000,
-      salePrice: 1350000,
-      discount: "25% OFF",
-      description:
-        "초경량 울트라씬 노트북. 어디서나 휴대 가능한 강력한 성능을 경험하세요.",
-      icon: "💻",
-    },
-    {
-      id: 3,
-      name: "Wireless Headphones",
-      originalPrice: 450000,
-      salePrice: 270000,
-      discount: "40% OFF",
-      description:
-        "프리미엄 노이즈 캔슬링 헤드폰. 완벽한 음질과 편안한 착용감을 제공합니다.",
-      icon: "🎧",
-    },
-  ];
+
+  const [products, setProducts] = useState<Product[]>([]);
 
   // Categories data
   const categories = [
@@ -62,20 +28,20 @@ const QpayMinimalShopping = () => {
     }
   };
 
-  // Format price function
-  const formatPrice = (price) => {
-    return `₩${price.toLocaleString()}`;
+  const getProductList = async () => {
+    const data = await fetchProductList();
+
+    console.log(data);
+    setProducts(data.products);
   };
 
-  const getProductList = async () => {
-    const data = await fetchProductList()
-
-    console.log(data)
-  }
-  
   useEffect(() => {
-    getProductList()
-  }, [])
+    getProductList();
+  }, []);
+
+  if (products.length === 0) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="qpay-app">
@@ -110,17 +76,16 @@ const QpayMinimalShopping = () => {
                 onClick={() => navigate(`/product/${product.id}`)}
               >
                 <div className="product-image">
-                  {product.icon}
-                  <div className="discount-badge">{product.discount}</div>
+                  <img src={product.image} alt={product.name} />
+                  <div className="discount-badge">{product.category}</div>
                 </div>
                 <div className="product-content">
                   <h3 className="product-name">{product.name}</h3>
                   <div className="product-price">
-                    <span className="original-price">
-                      {formatPrice(product.originalPrice)}
-                    </span>
+                    <span className="xrp-price">{product.price} XRP</span>
+
                     <span className="sale-price">
-                      {formatPrice(product.salePrice)}
+                      약 {convertXrpToKrw(product.price)}
                     </span>
                   </div>
                   <p className="product-description">{product.description}</p>

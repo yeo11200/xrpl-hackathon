@@ -232,22 +232,25 @@
 /* Products Styles */
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 40px;
+  grid-template-columns: repeat(3, 1fr); /* 3열 고정 */
+  gap: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
 }
 
 .product-item {
   position: relative;
   background: #fff;
-  border-radius: 10px;
+  border-radius: 15px;
   overflow: hidden;
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
-  height: 100%;
-  min-height: 500px;
+  width: 100%;
+  height: 520px; /* 고정 높이 */
 }
 
 .product-item:hover {
@@ -257,14 +260,20 @@
 
 .product-image {
   width: 100%;
-  height: 300px;
-  background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+  height: 320px; /* 이미지 높이 고정 */
+  background: #f8f9fa;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 4rem;
-  color: white;
+  overflow: hidden;
   position: relative;
+}
+
+.product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* 이미지 비율 유지하면서 영역 채우기 */
+  object-position: center;
 }
 
 .discount-badge {
@@ -281,10 +290,12 @@
 }
 
 .product-content {
-  padding: 30px;
+  padding: 25px;
   background: #ffffff;
-  border-radius: 0 0 10px 10px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   position: relative;
   z-index: 1;
 }
@@ -298,6 +309,9 @@
 
 .product-price {
   margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .original-price {
@@ -308,9 +322,16 @@
 }
 
 .sale-price {
+  color: #333;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.xrp-price {
   color: #ff4757;
   font-size: 1.4rem;
   font-weight: 700;
+  margin-top: 4px;
 }
 
 .product-description {
@@ -492,6 +513,13 @@
 }
 
 /* Responsive Design */
+@media (max-width: 1200px) {
+  .products-grid {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 0 15px;
+  }
+}
+
 @media (max-width: 768px) {
   .nav-links {
     display: none;
@@ -513,6 +541,15 @@
 
   .products-grid {
     grid-template-columns: 1fr;
+    padding: 0 10px;
+  }
+
+  .product-item {
+    height: 480px;
+  }
+
+  .product-image {
+    height: 280px;
   }
 
   .category-grid {

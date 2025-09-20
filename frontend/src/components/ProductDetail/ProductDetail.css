@@ -186,20 +186,21 @@
 .price {
   margin-bottom: 24px;
   display: flex;
-  align-items: baseline;
-  gap: 12px;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.price-now {
-  font-size: 32px;
+.price-xrp {
+  font-size: 36px;
   font-weight: 800;
-  color: var(--black);
+  color: var(--red);
+  letter-spacing: -0.5px;
 }
 
-.price-old {
-  font-size: 20px;
-  color: #9ca3af;
-  text-decoration: line-through;
+.price-krw {
+  font-size: 24px;
+  color: var(--gray-600);
+  font-weight: 500;
 }
 
 .desc {
@@ -219,7 +220,6 @@
   color: var(--black);
   margin-bottom: 12px;
   justify-content: flex-end; /* 오른쪽 정렬 */
-
 }
 
 .feature-list {
@@ -236,7 +236,6 @@
   line-height: 1.6;
   justify-content: flex-end; /* 오른쪽 정렬 */
   flex-direction: row-reverse; /* 이모티콘을 오른쪽으로 */
-
 }
 
 .dot {
@@ -246,7 +245,6 @@
   border-radius: 50%;
   display: none;
   margin-bottom: 8px;
-
 }
 
 .cta-row {
@@ -351,58 +349,58 @@
   .container {
     padding: 0 16px;
   }
-  
+
   .header-inner {
     padding: 12px 0;
   }
-  
+
   .brand {
     font-size: 20px;
   }
-  
+
   .nav {
     gap: 16px;
   }
-  
+
   .nav-link {
     font-size: 18px;
   }
-  
+
   .cart-badge {
     padding: 6px 12px;
     font-size: 12px;
   }
-  
+
   .main {
     padding: 100px 0 48px;
   }
-  
+
   .title {
     font-size: 24px;
   }
-  
+
   .price-now {
     font-size: 28px;
   }
-  
+
   .price-old {
     font-size: 18px;
   }
-  
+
   .cta-row {
     flex-direction: column;
     gap: 12px;
   }
-  
+
   .qty {
     width: 100%;
     justify-content: center;
   }
-  
+
   .add-btn {
     width: 100%;
   }
-  
+
   .footer-links {
     flex-wrap: wrap;
     gap: 16px;
@@ -414,11 +412,11 @@
   .grid {
     gap: 32px;
   }
-  
+
   .img-frame {
     aspect-ratio: 4 / 3;
   }
-  
+
   .cta-row {
     gap: 20px;
   }
@@ -430,19 +428,19 @@
     grid-template-columns: 1fr 1fr;
     gap: 48px;
   }
-  
+
   .main {
     padding: 120px 0 64px;
   }
-  
+
   .img-frame {
     aspect-ratio: 1 / 1;
   }
-  
+
   .title {
     font-size: 30px;
   }
-  
+
   .nav {
     gap: 20px;
   }
@@ -453,23 +451,23 @@
   .container {
     max-width: 80rem;
   }
-  
+
   .grid {
     gap: 100px;
   }
-  
+
   .img-frame {
     padding: 32px;
   }
-  
+
   .title {
     font-size: 40px;
   }
-  
+
   .price-now {
     font-size: 36px;
   }
-  
+
   .main {
     padding: 120px 0 80px;
   }
@@ -481,12 +479,12 @@
     padding: 16px 20px;
     font-size: 18px;
   }
-  
+
   .add-btn {
     padding: 20px 24px;
     font-size: 18px;
   }
-  
+
   .nav-link {
     padding: 8px;
     min-width: 44px;
@@ -509,7 +507,7 @@
   .main {
     padding: 80px 0 32px;
   }
-  
+
   .grid {
     gap: 24px;
   }
@@ -587,13 +585,18 @@
 }
 
 .add-btn::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
   transition: left 0.5s ease;
 }
 
@@ -625,8 +628,13 @@
 
 /* 별점 반짝이는 효과 */
 @keyframes sparkle {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 
 .stars {
@@ -635,9 +643,15 @@
 
 /* 할인 뱃지 펄스 효과 */
 @keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .badge {
@@ -659,12 +673,24 @@
   animation: fadeInLeft 0.6s ease forwards;
 }
 
-.feature-item:nth-child(1) { animation-delay: 0.1s; }
-.feature-item:nth-child(2) { animation-delay: 0.2s; }
-.feature-item:nth-child(3) { animation-delay: 0.3s; }
-.feature-item:nth-child(4) { animation-delay: 0.4s; }
-.feature-item:nth-child(5) { animation-delay: 0.5s; }
-.feature-item:nth-child(6) { animation-delay: 0.6s; }
+.feature-item:nth-child(1) {
+  animation-delay: 0.1s;
+}
+.feature-item:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.feature-item:nth-child(3) {
+  animation-delay: 0.3s;
+}
+.feature-item:nth-child(4) {
+  animation-delay: 0.4s;
+}
+.feature-item:nth-child(5) {
+  animation-delay: 0.5s;
+}
+.feature-item:nth-child(6) {
+  animation-delay: 0.6s;
+}
 
 /* 네비게이션 링크 호버 */
 .nav-link {
@@ -673,7 +699,7 @@
 }
 
 .nav-link::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: -4px;
   left: 50%;
@@ -822,13 +848,18 @@ input:focus {
 /* 공통 빛나는 효과 */
 .add-btn::before,
 .buy-now-btn::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
   transition: left 0.5s ease;
 }
 

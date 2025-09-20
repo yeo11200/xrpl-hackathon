@@ -1,116 +1,174 @@
-/* 배경 어두운 오버레이 */
-.popup-backdrop {
+.popup-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(5px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 50;
+  z-index: 9999;
 }
 
-/* 팝업 카드 */
-.popup-card {
+.popup-container {
+  background: white;
+  width: 90%;
+  max-width: 420px;
+  border-radius: 24px;
+  padding: 40px 30px;
   position: relative;
-  background: #fff;
-  border-radius: 16px;
-  padding: 24px;
-  width: 320px;
-  max-width: 90%;
-  text-align: center;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease-out;
 }
 
-/* 제목 */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.close-button {
+  position: absolute;
+  top: -50px;
+  right: -10px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: white;
+  font-size: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.close-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: rotate(90deg);
+}
+
 .popup-title {
-  font-size: 1.25rem;
-  font-weight: bold;
-  margin-bottom: 16px;
-  color: #111827;
-}
-
-/* 텍스트 */
-.popup-text {
-  font-size: 0.9rem;
-  color: #374151;
-  margin-top: 12px;
-}
-
-/* 버튼 */
-.open-btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 8px;
-  background: #4f46e5;
-  color: white;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.open-btn:hover {
-  background: #4338ca;
-}
-
-.close-btn {
-  margin-top: 16px;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 8px;
-  background: #ef4444;
-  color: white;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.close-btn:hover {
-  background: #dc2626;
-}
-
-/* 정보 섹션 스타일 */
-.popup-info {
-  margin: 20px 0;
-  text-align: left;
-  max-width: 100%;
-}
-
-.info-section {
-  margin-bottom: 20px;
-  padding: 15px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border-left: 4px solid #007bff;
-}
-
-.info-section h3 {
-  margin: 0 0 12px 0;
-  color: #007bff;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.info-section p {
-  margin: 8px 0;
-  font-size: 14px;
-  line-height: 1.4;
-}
-
-.info-section strong {
+  font-size: 26px;
+  font-weight: 700;
+  text-align: center;
+  margin: 0 0 30px;
   color: #333;
-  font-weight: 600;
 }
 
-.address-text {
-  font-family: "Courier New", monospace;
-  font-size: 12px;
-  background: #e9ecef;
-  padding: 8px;
-  border-radius: 4px;
+.qr-container {
+  background: #f8f9fa;
+  padding: 30px;
+  border-radius: 20px;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 30px;
+}
+
+.qr-code {
+  background: white !important;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.ticket-info {
+  background: #f8f9fa;
+  border-radius: 20px;
+  padding: 25px;
+}
+
+.info-section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 20px;
+}
+
+.info-row {
+  margin-bottom: 16px;
+}
+
+.info-row:last-child {
+  margin-bottom: 0;
+}
+
+.info-label {
+  display: block;
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.info-value {
+  display: block;
+  background: white;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 15px;
+  color: #333;
+  font-weight: 500;
+  border: 1px solid #eee;
   word-break: break-all;
-  color: #495057;
-  border: 1px solid #dee2e6;
+}
+
+.info-value.address {
+  font-family: monospace;
+  font-size: 14px;
+}
+
+.info-value.price {
+  color: #ff4757;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+@media (max-width: 480px) {
+  .popup-container {
+    width: 92%;
+    padding: 30px 20px;
+    margin: 0 15px;
+  }
+
+  .popup-title {
+    font-size: 22px;
+    margin-bottom: 25px;
+  }
+
+  .qr-container {
+    padding: 20px;
+  }
+
+  .qr-code {
+    padding: 15px;
+  }
+
+  .close-button {
+    top: 10px;
+    right: 10px;
+    width: 36px;
+    height: 36px;
+    font-size: 24px;
+    background: rgba(0, 0, 0, 0.1);
+    color: #333;
+  }
+
+  .ticket-info {
+    padding: 20px;
+  }
+
+  .info-value {
+    padding: 10px 14px;
+    font-size: 14px;
+  }
 }

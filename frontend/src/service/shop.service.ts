@@ -27,6 +27,11 @@ type ShopListResponse = {
   categories: string[];
 };
 
+type ShopDetailResponse = {
+  success: boolean;
+  product: Product;
+};
+
 export async function fetchProductList(params?: {
   category?: string;
   search?: string;
@@ -44,3 +49,12 @@ export async function fetchProductList(params?: {
     `/api/shop/products?${query.toString()}`
   );
 }
+
+// --- 2) 상세 조회 함수 ---
+// GET /api/shop/products/:id  → { success, product }
+export const getProductById = async (
+  id: number | string
+): Promise<ShopDetailResponse> => {
+  const safeId = typeof id === "string" ? id.trim() : String(id);
+  return await fetchApi<ShopDetailResponse>(`/api/shop/products/${safeId}`);
+};

@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "http2:start": "vite --host --mode http2"
+    "http2:start": "vite --host --port 5173"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.7",

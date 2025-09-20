@@ -52,6 +52,7 @@ const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:3001",
   "http://localhost:5173",
+  "https://192.0.0.2:5173",
   // API 도메인
   "https://api.coingecko.com",
   // 배포 도메인

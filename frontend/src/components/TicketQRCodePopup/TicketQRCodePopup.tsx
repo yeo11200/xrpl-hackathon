@@ -1,94 +1,63 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { QRCodeCanvas } from "qrcode.react";
-import { motion, AnimatePresence } from "framer-motion";
 import "./TicketQRCodePopup.css";
-import { useXrplSocket } from "../../hooks/useXRPL";
-import Toast from "../Toast";
 
-type TicketQRCodePopupProps = {
+interface QRData {
+  buyerAddress: string;
+  price: string;
+  productId: string;
+  productName: string;
+}
+
+interface Props {
   isOpen: boolean;
   onClose: () => void;
-  qrData: {
-    sellerAddress: string;
-    buyerAddress: string;
-    price: string;
-  };
-};
+  qrData: QRData;
+}
 
-const TicketQRCodePopup: React.FC<TicketQRCodePopupProps> = ({
-  isOpen,
-  onClose,
-  qrData,
-}) => {
-  const { txEvent } = useXrplSocket(qrData.buyerAddress);
+const TicketQRCodePopup: React.FC<Props> = ({ isOpen, onClose, qrData }) => {
+  if (!isOpen) return null;
 
   const qrValue = JSON.stringify(qrData);
 
-  const [toastOpen, setToastOpen] = useState(false);
-
-  useEffect(() => {
-    if (txEvent) {
-      onClose();
-      setToastOpen(true); // ✅ 결제 성공 시 알림 토스트 오픈
-    }
-  }, [txEvent, onClose]);
-
-  useEffect(() => {
-    window.setTimeout(() => {
-      setToastOpen(true);
-    }, 2000);
-  }, [isOpen]);
-
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          className="popup-backdrop"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
-          <motion.div
-            className="popup-card"
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.8, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <h2 className="popup-title">내 티켓 QR 코드</h2>
-            <QRCodeCanvas value={qrValue} size={200} includeMargin />
-            <div className="popup-info">
-              <div className="info-section">
-                <h3>거래 정보</h3>
-                <p>
-                  <strong>판매자 주소:</strong>
-                </p>
-                <p className="address-text">{qrData.sellerAddress}</p>
-                <p>
-                  <strong>구매자 주소:</strong>
-                </p>
-                <p className="address-text">{qrData.buyerAddress}</p>
-                <p>
-                  <strong>가격:</strong>
-                </p>
-                <p className="address-text">{qrData.price} XRP</p>
-              </div>
-            </div>
+    <div className="popup-overlay" onClick={onClose}>
+      <div className="popup-container" onClick={(e) => e.stopPropagation()}>
+        <button className="close-button" onClick={onClose}>
+          ×
+        </button>
 
-            <button className="close-btn" onClick={onClose}>
-              닫기 ✖
-            </button>
-            {toastOpen && (
-              <Toast
-                message="결제가 성공적으로 완료되었습니다."
-                isOpen={toastOpen}
-                onClose={() => setToastOpen(false)}
-              />
-            )}
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        <h2 className="popup-title">내 티켓 QR 코드</h2>
+
+        <div className="qr-container">
+          <QRCodeCanvas
+            value={qrValue}
+            size={200}
+            level="H"
+            className="qr-code"
+          />
+        </div>
+
+        <div className="ticket-info">
+          <h3 className="info-section-title">거래 정보</h3>
+
+          <div className="info-row">
+            <span className="info-label">상품 이름</span>
+            <span className="info-value">{qrData.productName}</span>
+          </div>
+
+          <div className="info-row">
+            <span className="info-label">구매자 주소</span>
+            <span className="info-value address">{qrData.buyerAddress}</span>
+          </div>
+
+          <div className="info-row">
+            <span className="info-label">가격</span>
+            <span className="info-value price">{qrData.price} XRP</span>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

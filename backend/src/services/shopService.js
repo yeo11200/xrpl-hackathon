@@ -208,6 +208,297 @@ async function getShopStats() {
   }
 }
 
+/**
+ * 장바구니 세션 생성/업데이트
+ * @param {string} sessionId - 세션 ID
+ * @returns {Promise<{success: boolean, error: any}>}
+ */
+async function createOrUpdateCartSession(sessionId) {
+  try {
+    const { error } = await supabase
+      .from('cart_sessions')
+      .upsert({
+        session_id: sessionId,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'session_id' });
+
+    if (error) {
+      logger.error(`장바구니 세션 생성/업데이트 실패 (${sessionId}):`, error);
+      return { success: false, error };
+    }
+
+    return { success: true, error: null };
+  } catch (error) {
+    logger.error(`장바구니 세션 처리 중 예외 발생 (${sessionId}):`, error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * 장바구니에 상품 추가/업데이트
+ * @param {string} sessionId - 세션 ID
+ * @param {number} productId - 상품 ID
+ * @param {number} quantity - 수량
+ * @returns {Promise<{success: boolean, cart: Object, error: any}>}
+ */
+async function addToCart(sessionId, productId, quantity = 1) {
+  try {
+    // 1. 상품 정보 조회
+    const { data: product, error: productError } = await getProductById(productId);
+    if (productError || !product) {
+      return { success: false, error: { message: "상품을 찾을 수 없습니다." } };
+    }
+
+    // 2. 재고 확인
+    const { available, currentStock, error: stockError } = await checkStock(productId, quantity);
+    if (stockError) {
+      return { success: false, error: { message: "재고 확인 중 오류가 발생했습니다." } };
+    }
+
+    if (!available) {
+      return { success: false, error: { message: `재고가 부족합니다. (현재 재고: ${currentStock})` } };
+    }
+
+    // 3. 장바구니 세션 생성/업데이트
+    const { success: sessionSuccess, error: sessionError } = await createOrUpdateCartSession(sessionId);
+    if (!sessionSuccess) {
+      return { success: false, error: sessionError };
+    }
+
+    // 4. 기존 장바구니 아이템 확인
+    const { data: existingItem } = await supabase
+      .from('cart_items')
+      .select('*')
+      .eq('session_id', sessionId)
+      .eq('product_id', productId)
+      .single();
+
+    let result;
+    if (existingItem) {
+      // 기존 아이템 수량 업데이트
+      const newQuantity = existingItem.quantity + quantity;
+      
+      // 새로운 수량으로 재고 재확인
+      const { available: newAvailable, currentStock: newCurrentStock } = await checkStock(productId, newQuantity);
+      if (!newAvailable) {
+        return { success: false, error: { message: `재고가 부족합니다. (현재 재고: ${newCurrentStock})` } };
+      }
+
+      result = await supabase
+        .from('cart_items')
+        .update({
+          quantity: newQuantity,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existingItem.id)
+        .select();
+    } else {
+      // 새 아이템 추가
+      result = await supabase
+        .from('cart_items')
+        .insert({
+          session_id: sessionId,
+          product_id: productId,
+          quantity: quantity,
+          price_snapshot: parseFloat(product.price)
+        })
+        .select();
+    }
+
+    if (result.error) {
+      logger.error('장바구니 아이템 추가/업데이트 실패:', result.error);
+      return { success: false, error: result.error };
+    }
+
+    // 5. 업데이트된 장바구니 정보 반환
+    const { data: cart, error: cartError } = await getCartBySessionId(sessionId);
+    if (cartError) {
+      return { success: false, error: cartError };
+    }
+
+    return { success: true, cart, error: null };
+  } catch (error) {
+    logger.error('장바구니 추가 중 예외 발생:', error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * 세션별 장바구니 조회
+ * @param {string} sessionId - 세션 ID
+ * @returns {Promise<{data: Object, error: any}>}
+ */
+async function getCartBySessionId(sessionId) {
+  try {
+    // 1. 장바구니 세션 정보 조회
+    const { data: session, error: sessionError } = await supabase
+      .from('cart_sessions')
+      .select('*')
+      .eq('session_id', sessionId)
+      .single();
+
+    if (sessionError && sessionError.code !== 'PGRST116') {
+      logger.error(`장바구니 세션 조회 실패 (${sessionId}):`, sessionError);
+      return { data: null, error: sessionError };
+    }
+
+    // 세션이 없으면 빈 장바구니 반환
+    if (!session) {
+      return {
+        data: {
+          session_id: sessionId,
+          items: [],
+          totalItems: 0,
+          totalAmountKRW: 0,
+          createdAt: null,
+          updatedAt: null
+        },
+        error: null
+      };
+    }
+
+    // 2. 장바구니 아이템들과 상품 정보 조회
+    const { data: cartItems, error: itemsError } = await supabase
+      .from('cart_items')
+      .select(`
+        *,
+        products (
+          id,
+          name,
+          image,
+          stock,
+          is_active
+        )
+      `)
+      .eq('session_id', sessionId);
+
+    if (itemsError) {
+      logger.error(`장바구니 아이템 조회 실패 (${sessionId}):`, itemsError);
+      return { data: null, error: itemsError };
+    }
+
+    // 3. 장바구니 데이터 가공
+    const items = cartItems.map(item => ({
+      productId: item.product_id,
+      name: item.products?.name || 'Unknown Product',
+      price: parseFloat(item.price_snapshot),
+      quantity: item.quantity,
+      image: item.products?.image || null,
+      isActive: item.products?.is_active || false,
+      currentStock: item.products?.stock || 0
+    }));
+
+    // 총 수량 및 총 금액 계산
+    const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+    const totalAmountKRW = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+    return {
+      data: {
+        session_id: sessionId,
+        items,
+        totalItems,
+        totalAmountKRW,
+        createdAt: session.created_at,
+        updatedAt: session.updated_at
+      },
+      error: null
+    };
+  } catch (error) {
+    logger.error(`장바구니 조회 중 예외 발생 (${sessionId}):`, error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * 장바구니에서 상품 제거
+ * @param {string} sessionId - 세션 ID
+ * @param {number} productId - 상품 ID
+ * @returns {Promise<{success: boolean, cart: Object, error: any}>}
+ */
+async function removeCartItem(sessionId, productId) {
+  try {
+    // 아이템 삭제
+    const { error } = await supabase
+      .from('cart_items')
+      .delete()
+      .eq('session_id', sessionId)
+      .eq('product_id', productId);
+
+    if (error) {
+      logger.error(`장바구니 아이템 삭제 실패 (${sessionId}, ${productId}):`, error);
+      return { success: false, error };
+    }
+
+    // 세션 업데이트 시간 갱신
+    await supabase
+      .from('cart_sessions')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('session_id', sessionId);
+
+    // 업데이트된 장바구니 정보 반환
+    const { data: cart, error: cartError } = await getCartBySessionId(sessionId);
+    if (cartError) {
+      return { success: false, error: cartError };
+    }
+
+    return { success: true, cart, error: null };
+  } catch (error) {
+    logger.error(`장바구니 아이템 제거 중 예외 발생 (${sessionId}, ${productId}):`, error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * 장바구니 전체 비우기
+ * @param {string} sessionId - 세션 ID
+ * @returns {Promise<{success: boolean, error: any}>}
+ */
+async function clearCart(sessionId) {
+  try {
+    // 모든 장바구니 아이템 삭제
+    const { error: itemsError } = await supabase
+      .from('cart_items')
+      .delete()
+      .eq('session_id', sessionId);
+
+    if (itemsError) {
+      logger.error(`장바구니 아이템 전체 삭제 실패 (${sessionId}):`, itemsError);
+      return { success: false, error: itemsError };
+    }
+
+    // 장바구니 세션도 삭제 (선택사항)
+    const { error: sessionError } = await supabase
+      .from('cart_sessions')
+      .delete()
+      .eq('session_id', sessionId);
+
+    if (sessionError) {
+      logger.warn(`장바구니 세션 삭제 실패 (${sessionId}):`, sessionError);
+    }
+
+    return { success: true, error: null };
+  } catch (error) {
+    logger.error(`장바구니 비우기 중 예외 발생 (${sessionId}):`, error);
+    return { success: false, error };
+  }
+}
+
+// 기존 module.exports에 새 함수들 추가
+module.exports = {
+  getProducts,
+  getProductById,
+  getCategories,
+  checkStock,
+  updateStock,
+  getShopStats,
+  // 장바구니 관련 함수들 추가
+  addToCart,
+  getCartBySessionId,
+  removeCartItem,
+  clearCart,
+  createOrUpdateCartSession
+};
+
 module.exports = {
   getProducts,
   getProductById,

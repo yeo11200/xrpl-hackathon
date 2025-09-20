@@ -295,53 +295,22 @@ router.post("/cart/add", async (req, res) => {
       });
     }
 
-    // shopService를 통해 상품 조회 및 재고 확인
-    const { data: product, error: productError } = await shopService.getProductById(productId);
-    if (productError || !product) {
-      return res.status(404).json({
-        success: false,
-        message: "상품을 찾을 수 없습니다.",
-      });
-    }
-
-    // 재고 확인
-    const { available, currentStock, error: stockError } = await shopService.checkStock(productId, quantity);
-    if (stockError) {
-      return res.status(500).json({
-        success: false,
-        message: "재고 확인 중 오류가 발생했습니다.",
-      });
-    }
-
-    if (!available) {
+    if (!productId || quantity <= 0) {
       return res.status(400).json({
         success: false,
-        message: `재고가 부족합니다. (현재 재고: ${currentStock})`,
+        message: "유효한 상품 ID와 수량이 필요합니다.",
       });
     }
 
-    // 장바구니 처리 (기존 로직 유지)
-    if (!carts.has(sessionId)) {
-      carts.set(sessionId, { items: [], createdAt: new Date().toISOString() });
-    }
+    // shopService를 통해 장바구니에 상품 추가
+    const { success, cart, error } = await shopService.addToCart(sessionId, productId, quantity);
 
-    const cart = carts.get(sessionId);
-    const existingItem = cart.items.find((item) => item.productId === productId);
-
-    if (existingItem) {
-      existingItem.quantity += quantity;
-    } else {
-      cart.items.push({
-        productId,
-        name: product.name,
-        price: parseFloat(product.price),
-        quantity,
-        image: product.image,
+    if (!success) {
+      return res.status(400).json({
+        success: false,
+        message: error?.message || "장바구니에 상품을 추가하는데 실패했습니다.",
       });
     }
-
-    cart.updatedAt = new Date().toISOString();
-    carts.set(sessionId, cart);
 
     res.json({
       success: true,
@@ -377,34 +346,31 @@ router.post("/cart/add", async (req, res) => {
 router.get("/cart/:sessionId", async (req, res) => {
   try {
     const { sessionId } = req.params;
-    const cart = carts.get(sessionId);
 
-    if (!cart) {
-      return res.json({
-        success: true,
-        cart: { items: [], totalItems: 0, totalAmount: 0 },
+    // shopService를 통해 장바구니 조회
+    const { data: cart, error } = await shopService.getCartBySessionId(sessionId);
+
+    if (error) {
+      logger.error("장바구니 조회 실패:", error);
+      return res.status(500).json({
+        success: false,
+        message: "장바구니를 불러오는데 실패했습니다.",
       });
     }
-
-    // 총 금액 계산
-    const totalAmount = cart.items.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0
-    );
-    const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0);
 
     // XRP 가격 정보 추가 (KRW -> XRP 변환)
     let xrpPriceInfo = null;
     let xrpPrice = null;
     let totalAmountXRP = null;
+    
     try {
       xrpPriceInfo = await cryptoPriceService.getXrpPrice();
       xrpPrice = xrpPriceInfo.currentPrice;
-      totalAmountXRP = (totalAmount / xrpPrice).toFixed(6); // KRW를 XRP로 변환
+      totalAmountXRP = (cart.totalAmountKRW / xrpPrice).toFixed(6);
     } catch (error) {
       logger.warn("XRP 가격 정보를 가져올 수 없습니다:", error.message);
       // 기본 변환율 사용 (1 XRP = 1500 KRW)
-      totalAmountXRP = (totalAmount / 1500).toFixed(6);
+      totalAmountXRP = (cart.totalAmountKRW / 1500).toFixed(6);
       xrpPrice = 1500;
     }
 
@@ -412,8 +378,6 @@ router.get("/cart/:sessionId", async (req, res) => {
       success: true,
       cart: {
         ...cart,
-        totalItems,
-        totalAmountKRW: totalAmount, // 장바구니 총액 (KRW)
         totalAmountXRP, // 장바구니 총액 (XRP)
         xrpPrice, // 현재 XRP 가격
         xrpPriceInfo, // XRP 상세 시세 정보
@@ -441,23 +405,19 @@ router.get("/cart/:sessionId", async (req, res) => {
  * @apiSuccess {String} message 결과 메시지
  * @apiSuccess {Object} cart 장바구니 정보
  */
-router.delete("/cart/:sessionId/item/:productId", (req, res) => {
+router.delete("/cart/:sessionId/item/:productId", async (req, res) => {
   try {
     const { sessionId, productId } = req.params;
-    const cart = carts.get(sessionId);
 
-    if (!cart) {
+    // shopService를 통해 장바구니에서 상품 제거
+    const { success, cart, error } = await shopService.removeCartItem(sessionId, parseInt(productId));
+
+    if (!success) {
       return res.status(404).json({
         success: false,
-        message: "장바구니를 찾을 수 없습니다.",
+        message: error?.message || "장바구니에서 상품을 제거하는데 실패했습니다.",
       });
     }
-
-    cart.items = cart.items.filter(
-      (item) => item.productId !== parseInt(productId)
-    );
-    cart.updatedAt = new Date().toISOString();
-    carts.set(sessionId, cart);
 
     res.json({
       success: true,

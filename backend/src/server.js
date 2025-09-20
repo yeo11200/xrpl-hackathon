@@ -10,6 +10,7 @@ const xrplRoutes = require("./routes/xrpl");
 const paymentRoutes = require("./routes/payment");
 const accountRoutes = require("./routes/account");
 const shopRoutes = require("./routes/shop");
+const credentialRoutes = require("./routes/credential");
 const errorHandler = require("./middleware/errorHandler");
 const { supabase } = require("./services/supabaseClient");
 
@@ -108,7 +109,7 @@ app.use("/api/xrpl", xrplRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/account", accountRoutes);
 app.use("/api/shop", shopRoutes);
-
+app.use("/api/credential", credentialRoutes);
 // 404 handler
 app.use("*", (req, res) => {
   res.status(404).json({

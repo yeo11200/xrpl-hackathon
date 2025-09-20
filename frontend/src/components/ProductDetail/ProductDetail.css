@@ -53,13 +53,13 @@
 .nav {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 45px;
 }
 
 .nav-link {
   text-decoration: none;
   color: var(--gray-600);
-  font-size: 14px;
+  font-size: 25px;
   font-weight: 500;
 }
 
@@ -218,6 +218,8 @@
   font-weight: 700;
   color: var(--black);
   margin-bottom: 12px;
+  justify-content: flex-end; /* 오른쪽 정렬 */
+
 }
 
 .feature-list {
@@ -229,8 +231,12 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
+  font-size: 16px;
   color: var(--gray-600);
+  line-height: 1.6;
+  justify-content: flex-end; /* 오른쪽 정렬 */
+  flex-direction: row-reverse; /* 이모티콘을 오른쪽으로 */
+
 }
 
 .dot {
@@ -238,7 +244,9 @@
   height: 6px;
   background: var(--black);
   border-radius: 50%;
-  display: inline-block;
+  display: none;
+  margin-bottom: 8px;
+
 }
 
 .cta-row {
@@ -754,5 +762,51 @@ input:focus {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* 버튼 그룹 스타일 */
+.btn-group {
+  display: flex;
+  flex: 1;
+  gap: 12px;
+}
+
+.add-btn {
+  flex: 1;
+  background: var(--black);
+  color: var(--white);
+  border: 0;
+  border-radius: 8px;
+  padding: 16px 24px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.buy-now-btn {
+  flex: 1;
+  background: var(--white);
+  color: var(--black);
+  border: 2px solid var(--black);
+  border-radius: 8px;
+  padding: 16px 24px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.buy-now-btn:hover {
+  background: var(--black);
+  color: var(--white);
+}
+
+/* 모바일에서 버튼 세로 배치 */
+@media (max-width: 480px) {
+  .btn-group {
+    flex-direction: column;
+    width: 100%;
   }
 }

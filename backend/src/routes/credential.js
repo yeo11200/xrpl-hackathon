@@ -76,7 +76,7 @@ router.post("/accept", async (req, res, next) => {
 
     const result = await accountService.acceptCredential({
       subjectSeed,
-      credentialType: 'XPAY_MEMBER'  // 키:값 형태로 수정
+      credentialType: process.env.CRED_TYPE  // 키:값 형태로 수정
     });
 
     const statusCode = result.success ? 200 : 400;

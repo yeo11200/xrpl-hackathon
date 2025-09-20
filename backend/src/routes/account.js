@@ -791,6 +791,8 @@ router.post("/:address/validation",
       // 예외 처리 후 일반 결제만 추가하여 개발하였습니다. 추후 디벨롭을 통해 해당 기능으로 Credentail 검증 후 결제 기능이 동작하도록 
       // 개발할 예정입니다.
 
+      // test
+
       return res.status(201).json({
           success: true
         });

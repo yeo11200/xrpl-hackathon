@@ -47,7 +47,10 @@ const MyPage = () => {
   };
 
   const formatBalance = (balance: number) => {
-    return balance.toLocaleString();
+    return balance.toLocaleString("ko-KR", {
+      maximumFractionDigits: 0,
+      minimumFractionDigits: 0,
+    });
   };
 
   if (loading) {
@@ -76,9 +79,6 @@ const MyPage = () => {
         <div className="balance-display">
           <span className="balance-amount">
             {formatBalance(accountData.balanceXRP)} XRP
-          </span>
-          <span className="balance-drops">
-            ({formatBalance(accountData.balance)} drops)
           </span>
         </div>
       </motion.div>

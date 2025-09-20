@@ -1,4 +1,5 @@
-const BASE_URL = import.meta.env?.VITE_APP_API_URL ?? "http://localhost:3000";
+const BASE_URL =
+  "https://port-0-xrpl-hackathon-mawg9la9662519f8.sel4.cloudtype.app";
 
 export type FetchOptions = {
   method?: "GET" | "POST" | "PUT" | "DELETE";

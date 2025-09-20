@@ -7,7 +7,7 @@ import fetchApi from "../utils/fetch-api";
 // API Endpoints
 const ENDPOINTS = {
   XRP_DETAIL:
-    "https://api.coingecko.com/api/v3/coins/ripple?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false",
+    "https://api.coingecko.com/api/v3/coins/ripple?localization=false&tickers=false&market_data=true&community_data=false",
   SIMPLE_PRICE: "https://api.coingecko.com/api/v3/simple/price",
 } as const;
 
@@ -48,7 +48,11 @@ export interface XrpPriceInfo {
  * @returns XRP 시세 정보
  */
 export const getXrpPrice = async (): Promise<XrpPriceInfo> => {
-  const data = await fetchApi<CoinGeckoDetailResponse>(ENDPOINTS.XRP_DETAIL);
+  const data = await fetchApi<CoinGeckoDetailResponse>(
+    ENDPOINTS.XRP_DETAIL,
+    {},
+    true
+  );
 
   return {
     currentPrice: data.market_data.current_price.krw,
@@ -71,7 +75,8 @@ export const getSimpleXrpPrice = async (): Promise<number> => {
         ids: "ripple",
         vs_currencies: "krw",
       },
-    }
+    },
+    true
   );
 
   return data.ripple.krw;

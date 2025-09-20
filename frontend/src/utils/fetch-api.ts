@@ -1,4 +1,4 @@
-const BASE_URL = "";
+const BASE_URL = import.meta.env?.VITE_APP_API_URL ?? "http://localhost:3000";
 
 export type FetchOptions = {
   method?: "GET" | "POST" | "PUT" | "DELETE";
@@ -9,8 +9,16 @@ export type FetchOptions = {
 
 const fetchApi = async <T>(
   endpoint: string, // 기존 url 대신 endpoint만 받음
-  options: FetchOptions = {}
+  options: FetchOptions = {},
+  isExternal?: boolean
 ): Promise<T> => {
+  let externalUrl = BASE_URL;
+
+  if (isExternal) {
+    externalUrl = endpoint;
+    endpoint = "";
+  }
+
   try {
     const {
       method = "GET",
@@ -34,7 +42,7 @@ const fetchApi = async <T>(
       : "";
 
     // Base URL과 endpoint 결합
-    const fullUrl = `${BASE_URL}${endpoint}${queryString}`;
+    const fullUrl = `${externalUrl}${endpoint}${queryString}`;
 
     const response = await fetch(fullUrl, {
       method,

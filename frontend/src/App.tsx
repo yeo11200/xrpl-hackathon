@@ -17,7 +17,7 @@ import { SellerPage } from "./pages/SellerPage";
 import { QpayMinimalShoppingPage } from "./pages/QpayMinimalShoppingPage";
 import { MyPage } from "./pages/MyPage";
 import { ProductDetailPage } from "./pages/ProductDetailPage";
-
+import { CryptoPriceProvider } from "./contexts/CryptoPriceContext";
 
 // 페이지 컴포넌트 예시
 const PageWrapper = ({ children }: { children: React.ReactNode }) => {
@@ -56,6 +56,7 @@ const AnimatedRoutes = () => {
         <Route path="/ticket-verifier" element={<TicketVerifierPage />} />
         <Route path="/seller" element={<SellerPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/product/:id" element={<ProductDetailPage />} />
       </Routes>
     </AnimatePresence>
   );
@@ -68,19 +69,21 @@ function App() {
 
   return (
     <AuthProvider>
-      <TransactionDetailProvider>
-        <Router>
-          <div className="min-h-screen bg-gray-50 text-gray-900">
-            <Header />
+      <CryptoPriceProvider>
+        <TransactionDetailProvider>
+          <Router>
+            <div className="min-h-screen bg-gray-50 text-gray-900">
+              <Header />
 
-            <main>
-              <section className="w-full md:w-3/4">
-                <AnimatedRoutes />
-              </section>
-            </main>
-          </div>
-        </Router>
-      </TransactionDetailProvider>
+              <main>
+                <section className="w-full md:w-3/4">
+                  <AnimatedRoutes />
+                </section>
+              </main>
+            </div>
+          </Router>
+        </TransactionDetailProvider>
+      </CryptoPriceProvider>
     </AuthProvider>
   );
 }

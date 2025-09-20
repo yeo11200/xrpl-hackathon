@@ -1,12 +1,9 @@
 import React, { createContext, useState, useEffect } from "react";
-import {
-  getXrpPrice,
-  type XrpPriceInfo,
-} from "../service/crypto-price.service";
+import { getSimpleXrpPrice } from "../service/crypto-price.service";
 
 // Context에서 제공할 타입 정의
 interface CryptoPriceContextType {
-  xrpPriceInfo: XrpPriceInfo | null;
+  xrpPrice: number | null;
   loading: boolean;
   error: string | null;
   refreshPrice: () => Promise<void>;
@@ -16,13 +13,13 @@ interface CryptoPriceContextType {
 // XRP를 KRW로 변환하는 함수
 const convertXrpToKrwImpl = (
   xrpAmount: number,
-  xrpPriceInfo: XrpPriceInfo | null
+  currentPrice: number | null
 ): string => {
-  if (!xrpPriceInfo || !xrpPriceInfo.currentPrice) {
+  if (!currentPrice) {
     return "계산 중...";
   }
 
-  const krwValue = xrpAmount * xrpPriceInfo.currentPrice;
+  const krwValue = xrpAmount * currentPrice;
 
   if (krwValue >= 1000000000000) {
     const trillions = krwValue / 1000000000000;
@@ -57,7 +54,7 @@ const CryptoPriceContext = createContext<CryptoPriceContextType | undefined>(
 export const CryptoPriceProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [xrpPriceInfo, setXrpPriceInfo] = useState<XrpPriceInfo | null>(null);
+  const [xrpPrice, setXrpPrice] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -65,8 +62,8 @@ export const CryptoPriceProvider: React.FC<{ children: React.ReactNode }> = ({
   const fetchXrpPrice = async () => {
     try {
       setLoading(true);
-      const data = await getXrpPrice();
-      setXrpPriceInfo(data);
+      const price = await getSimpleXrpPrice();
+      setXrpPrice(price);
       setError(null);
     } catch (err) {
       setError("시세 정보를 불러오는데 실패했습니다.");
@@ -79,21 +76,30 @@ export const CryptoPriceProvider: React.FC<{ children: React.ReactNode }> = ({
   // 컴포넌트 마운트 시와 주기적으로 가격 정보 업데이트
   useEffect(() => {
     fetchXrpPrice();
+
+    // 1분마다 가격 정보 업데이트
+    const intervalId = setInterval(fetchXrpPrice, 60000);
+
+    // 컴포넌트 언마운트 시 인터벌 정리
+    return () => clearInterval(intervalId);
   }, []);
 
   // 외부에서 수동으로 가격 정보를 갱신할 수 있는 함수
   const refreshPrice = async () => {
-    await fetchXrpPrice();
+    if (!loading) {
+      // 이미 로딩 중이면 중복 요청 방지
+      await fetchXrpPrice();
+    }
   };
 
   // XRP -> KRW 변환 함수
   const convertXrpToKrw = (xrpAmount: number): string => {
-    return convertXrpToKrwImpl(xrpAmount, xrpPriceInfo);
+    return convertXrpToKrwImpl(xrpAmount, xrpPrice);
   };
 
   // Context 값 정의
   const value = {
-    xrpPriceInfo,
+    xrpPrice,
     loading,
     error,
     refreshPrice,

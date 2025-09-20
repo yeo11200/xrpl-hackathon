@@ -9,7 +9,8 @@
 
 /* Container */
 .container {
-  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
@@ -39,8 +40,12 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Error State */
@@ -105,9 +110,15 @@
 }
 
 @keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* Product Layout */
@@ -324,13 +335,13 @@
 
 .quantity-btn:hover:not(:disabled) {
   border-color: #1f2937;
-  background-color: #f9fafb;
+  /* background-color: #f9fafb; */
 }
 
 .quantity-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  background-color: #f3f4f6;
+  /* background-color: #f3f4f6; */
 }
 
 .quantity-display {
@@ -419,11 +430,11 @@
   .container {
     padding: 1.5rem;
   }
-  
+
   .product-layout {
     gap: 3rem;
   }
-  
+
   .main-image {
     height: 400px;
   }
@@ -433,33 +444,33 @@
   .container {
     padding: 1rem;
   }
-  
+
   .header-content {
     flex-direction: column;
     gap: 1rem;
   }
-  
+
   .product-layout {
     grid-template-columns: 1fr;
     gap: 2rem;
   }
-  
+
   .product-title {
     font-size: 2rem;
   }
-  
+
   .price-current {
     font-size: 1.75rem;
   }
-  
+
   .main-image {
     height: 350px;
   }
-  
+
   .thumbnails {
     gap: 0.25rem;
   }
-  
+
   .thumbnail {
     width: 65px;
     height: 65px;
@@ -470,35 +481,35 @@
   .container {
     padding: 0.75rem;
   }
-  
+
   .product-title {
     font-size: 1.5rem;
   }
-  
+
   .price-current {
     font-size: 1.5rem;
   }
-  
+
   .main-image {
     height: 280px;
   }
-  
+
   .thumbnail {
     width: 55px;
     height: 55px;
   }
-  
+
   .quantity-btn {
     width: 40px;
     height: 40px;
     font-size: 1.1rem;
   }
-  
+
   .quantity-display {
     font-size: 1.1rem;
     padding: 0.5rem 0.75rem;
   }
-  
+
   .btn {
     padding: 0.875rem 1.5rem;
     font-size: 1rem;
@@ -511,33 +522,33 @@
     background-color: #1f2937;
     color: #f3f4f6;
   }
-  
+
   .header {
     background-color: #1f2937;
     border-bottom-color: #374151;
   }
-  
+
   .logo {
     color: #f3f4f6;
   }
-  
+
   .main-image {
     border-color: #374151;
   }
-  
+
   .pricing,
   .quantity-section,
   .action-section {
     background-color: #374151;
     border-color: #4b5563;
   }
-  
+
   .quantity-btn {
     background-color: #4b5563;
     border-color: #6b7280;
     color: #f3f4f6;
   }
-  
+
   .quantity-display {
     background-color: #4b5563;
     border-color: #6b7280;

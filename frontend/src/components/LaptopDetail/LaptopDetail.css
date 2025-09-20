@@ -1,0 +1,154 @@
+.seller-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.seller-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.seller-header h1 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.new-product-btn {
+  background-color: #007aff;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background-color 0.2s ease;
+}
+
+.new-product-btn:hover {
+  background-color: #0066cc;
+}
+
+.seller-table-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.seller-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.seller-table th {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #666;
+  font-size: 0.875rem;
+  border-bottom: 1px solid #eee;
+}
+
+.seller-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #eee;
+  color: #333;
+  font-size: 0.875rem;
+}
+
+.seller-table tr:last-child td {
+  border-bottom: none;
+}
+
+.seller-table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.seller-table tbody tr.clickable-row {
+  cursor: pointer;
+}
+
+.seller-table tbody tr.clickable-row:hover {
+  background-color: #f8f9fa;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.status-badge.on-sale {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-badge.sold-out {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.refund-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  background-color: #fff3e0;
+  color: #e65100;
+}
+
+.refund-btn:hover {
+  background-color: #ffe0b2;
+}
+
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #323232;
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+@media (max-width: 768px) {
+  .seller-container {
+    padding: 1rem;
+  }
+
+  .seller-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .seller-table th,
+  .seller-table td {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
+}

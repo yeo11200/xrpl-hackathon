@@ -11,7 +11,7 @@ import { TransactionDetailProvider } from "./contexts/TransactionDetailContext";
 import { TicketVerifierPage } from "./pages/TicketVerifierPage";
 import { LoginPage } from "./pages/LoginPage";
 import Header from "./components/Header";
-import { PaymentsPage } from "./pages/PaymentsPage";
+// import { PaymentsPage } from "./pages/PaymentsPage";
 import { initXrplClient } from "./utils/xrpl-client";
 import { SellerPage } from "./pages/SellerPage";
 import { QpayMinimalShoppingPage } from "./pages/QpayMinimalShoppingPage";
@@ -48,7 +48,7 @@ const AnimatedRoutes = () => {
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<QpayMinimalShoppingPage />} />
-        <Route path="/payments" element={<PaymentsPage />} />
+        {/* <Route path="/payments" element={<PaymentsPage />} /> */}
         <Route path="/subscriptions" element={<Subscriptions />} />
         <Route path="/profile" element={<MyPage />} />
         <Route path="/ticket-verifier" element={<TicketVerifierPage />} />

@@ -16,9 +16,7 @@ import { initXrplClient } from "./utils/xrpl-client";
 import { SellerPage } from "./pages/SellerPage";
 import { QpayMinimalShoppingPage } from "./pages/QpayMinimalShoppingPage";
 import { MyPage } from "./pages/MyPage";
-import { HeadphonesDetailPage } from "./pages/HeadphonesDetailPage";
-import { LaptopDetailPage } from "./pages/LaptopDetailPage";
-import { SmartphoneDetailPage } from "./pages/SmartphoneDetailPage";
+import { ProductDetailPage } from "./pages/ProductDetailPage";
 
 
 // 페이지 컴포넌트 예시

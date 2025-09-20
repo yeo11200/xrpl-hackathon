@@ -53,6 +53,7 @@ const allowedOrigins =
         process.env.FRONTEND_URL || "https://yourdomain.com",
         "https://api.coingecko.com",
         process.env.SUPABASE_URL, // Supabase URL
+        "http://localhost:5173",
       ].filter(Boolean) // undefined 값 제거
     : [
         "http://localhost:3000",
@@ -124,15 +125,15 @@ app.get("/health", (req, res) => {
  * @apiSuccess {String} details Additional info
  */
 app.get("/db-health", async (req, res, next) => {
-	try {
-		const { data, error } = await supabase.rpc('healthcheck');
-		if (error) {
-			return res.status(500).json({ status: "ERROR", error: error.message });
-		}
-		return res.json({ status: data === true ? "OK" : "UNKNOWN" });
-	} catch (err) {
-		return next(err);
-	}
+  try {
+    const { data, error } = await supabase.rpc("healthcheck");
+    if (error) {
+      return res.status(500).json({ status: "ERROR", error: error.message });
+    }
+    return res.json({ status: data === true ? "OK" : "UNKNOWN" });
+  } catch (err) {
+    return next(err);
+  }
 });
 
 // API routes

@@ -15,6 +15,9 @@ const errorHandler = require("./middleware/errorHandler");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Supabase와 같은 프록시 사용 시 필요한 설정
+app.set("trust proxy", true);
+
 // Security middleware
 app.use(
   helmet({
@@ -40,16 +43,31 @@ app.use(
   express.static(path.join(__dirname, "../apidoc"))
 );
 
+// CORS 허용 도메인 설정
+const allowedOrigins =
+  process.env.NODE_ENV === "production"
+    ? [
+        process.env.FRONTEND_URL || "https://yourdomain.com",
+        "https://api.coingecko.com",
+        process.env.SUPABASE_URL, // Supabase URL
+      ].filter(Boolean) // undefined 값 제거
+    : [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:5173",
+        "https://api.coingecko.com",
+      ];
+
 app.use(
   cors({
-    origin:
-      process.env.NODE_ENV === "production"
-        ? [process.env.FRONTEND_URL || "https://yourdomain.com"]
-        : [
-            "http://localhost:3000",
-            "http://localhost:3001",
-            "http://localhost:5173",
-          ],
+    origin: (origin, callback) => {
+      // origin이 없거나(같은 도메인) 허용된 도메인이면 허용
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
@@ -59,6 +77,16 @@ const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs
   message: "Too many requests from this IP, please try again later.",
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  // Supabase나 다른 프록시를 통해 들어오는 실제 클라이언트 IP 처리
+  keyGenerator: (req) => {
+    const realIp =
+      req.headers["x-real-ip"] ||
+      req.headers["x-forwarded-for"]?.split(",")[0] ||
+      req.ip;
+    return realIp;
+  },
 });
 app.use("/api/", limiter);
 

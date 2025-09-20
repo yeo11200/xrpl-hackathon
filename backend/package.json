@@ -11,10 +11,11 @@
     "url": "http://localhost:3000"
   },
   "scripts": {
-    "start": "npm run docs:generate && node src/server.js",
+    "start": "npm run docs:build && node src/server.js",
     "dev": "npm run docs:generate && nodemon src/server.js",
     "test": "jest",
     "docs:generate": "apidoc -i src/routes -o apidoc",
+    "docs:build": "npx apidoc -i src/routes -o apidoc",
     "docs:watch": "apidoc -i src/routes -o apidoc && nodemon --watch src/routes --ext js --exec \"apidoc -i src/routes -o apidoc\"",
     "docs:serve": "npm run docs:generate && http-server apidoc -p 8080"
   },

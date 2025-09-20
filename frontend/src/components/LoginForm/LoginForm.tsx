@@ -14,7 +14,7 @@ const LoginForm: React.FC = () => {
   const handleNicknameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     // 한글, 영어, 숫자만 허용하는 정규식
-    const regex = /^[가-힣a-zA-Z0-9]*$/;
+    const regex = /^[ㄱ-ㅎㅏ-ㅣ가-힣a-zA-Z0-9]*$/;
 
     if (regex.test(value)) {
       setNickname(value);

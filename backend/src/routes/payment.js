@@ -55,7 +55,7 @@ router.post(
         description,
         merchantAddress
       );
-
+  // ✅ PermissionedDEX + Credential 필드
       res.status(201).json({
         success: true,
         data: paymentRequest,

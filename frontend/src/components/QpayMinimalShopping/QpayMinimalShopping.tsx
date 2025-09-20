@@ -1,7 +1,9 @@
 import React from "react";
 import "./QpayMinimalShopping.css";
+import { useCryptoPrice } from "../../hooks/useCryptoPrice";
 
 const QpayMinimalShopping = () => {
+  const { convertXrpToKrw } = useCryptoPrice();
   // Products data
   const products = [
     {
@@ -17,7 +19,7 @@ const QpayMinimalShopping = () => {
     {
       id: 2,
       name: "Ultra-thin Laptop",
-      originalPrice: 1800000,
+      originalPrice: convertXrpToKrw(30),
       salePrice: 1350000,
       discount: "25% OFF",
       description:

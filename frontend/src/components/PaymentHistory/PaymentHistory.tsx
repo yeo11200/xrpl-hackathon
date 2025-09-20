@@ -177,7 +177,7 @@ const PaymentHistory = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.6 }}
           >
-            결제 내역
+            주문/배송 조회
           </motion.h1>
           <motion.p
             className="hero-description"
@@ -205,6 +205,7 @@ const PaymentHistory = () => {
               { key: "purchase", label: "구매" },
               { key: "transfer", label: "송금" },
               { key: "refund", label: "환불" },
+              { key: "delivery", label: "배송 현황" },
             ].map((tab, index) => (
               <motion.button
                 key={tab.key}

@@ -5,8 +5,8 @@ class XRPLClient {
   constructor(serverUrl, network) {
     this.client = null;
     this.isConnected = false;
-    this.serverUrl = serverUrl || process.env.XRPL_SERVER || "wss://s.altnet.rippletest.net:51233";
-    this.network = network || process.env.XRPL_NETWORK || "testnet";
+    this.serverUrl = serverUrl || process.env.XRPL_SERVER || "wss://s.devnet.rippletest.net:51233";
+    this.network = network || process.env.XRPL_NETWORK || "devnet";
   }
 
   // 연결 관리
@@ -74,9 +74,9 @@ class XRPLClient {
   }
 
   async fundWallet(wallet = null) {
-    if (this.network !== "testnet") {
-      throw new Error("펀딩은 테스트넷에서만 가능합니다");
-    }
+    // if (this.network !== "testnet") {
+    //   throw new Error("펀딩은 테스트넷에서만 가능합니다");
+    // }
     try {
       const client = await this.getClient();
       return await client.fundWallet(wallet, { faucetHost: null });

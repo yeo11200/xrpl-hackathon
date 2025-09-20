@@ -59,27 +59,24 @@ router.post("/create", async (req, res, next) => {
  * @apiDescription 피발급자가 자격증명을 수락합니다
  *
  * @apiBody {String} subjectSeed 피발급자의 시드값
- * @apiBody {String} issuerAddress 발급자의 XRPL 주소
- * @apiBody {String} credentialType 자격증명 타입
  *
  * @apiSuccess {Boolean} success 요청 성공 여부
  * @apiSuccess {Object} transaction 트랜잭션 정보
  */
 router.post("/accept", async (req, res, next) => {
   try {
-    const { subjectSeed, issuerAddress, credentialType } = req.body;
+    const { subjectSeed } = req.body;
 
-    if (!subjectSeed || !issuerAddress || !credentialType) {
+    if (!subjectSeed) {
       return res.status(400).json({
         success: false,
-        message: "필수 파라미터가 누락되었습니다: subjectSeed, issuerAddress, credentialType"
+        message: "필수 파라미터가 누락되었습니다: subjectSeed"
       });
     }
 
     const result = await accountService.acceptCredential({
       subjectSeed,
-      issuerAddress,
-      credentialType
+      credentialType: 'XPAY_MEMBER'  // 키:값 형태로 수정
     });
 
     const statusCode = result.success ? 200 : 400;

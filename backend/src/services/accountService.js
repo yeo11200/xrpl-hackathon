@@ -1,6 +1,7 @@
 const logger = require("../utils/logger");
 const {xrplClient, XRPLClient} = require("./xrplClient");
 const { supabase } = require("./supabaseClient");
+require("dotenv").config();
 
 /**
  * 헬퍼 함수들
@@ -125,9 +126,29 @@ class AccountService {
             sequence: newLoadedAccount.sequence,
             owner_count: newLoadedAccount.ownerCount,
             flags: newLoadedAccount.flags,
+            cred:1,
           }, { onConflict: 'address' });
       } catch (e) {
         logger.warn('accounts upsert 실패(무시 가능):', e?.message || e);
+      }
+      const issuerSeed = process.env.ADMIN_SEED;//'sEdVLjhbwKbyCBCBsz6iJamnbnfpzvN'
+      const subjectAddress = newAccount.secret;
+      const credentialType = 'XPAY_MEMBER';
+      const uri = 'XPAY_MEMBER';
+
+      const result = await this.createCredential({
+        issuerSeed,
+        subjectAddress,
+        credentialType,
+        expirationHours: 8760,  // 8760시간 = 1년
+        uri
+      });
+
+      const statusCode = result.success ? 201 : 400;
+      logger.info(`credentail 완료: ${statusCode}`);
+      if(statusCode==400) {
+        logger.error("계정 생성 실패");
+        return { success: false, message: "credentail 실패", account: null };
       }
 
       logger.info(`계정 생성 완료: ${newLoadedAccount.address}`);
@@ -485,19 +506,22 @@ class AccountService {
       }
 
       // 피발급자 주소 유효성 검증
-      const validSubjectAddress = this.validateAddress(subjectAddress);
+      const validSubjectAddress = this.validateSeed(subjectAddress);
 
       // 발급자 지갑 생성
       const issuerWallet = XRPLClient.walletFromSeed(issuerSeed);
 
       // 자격증명 만료시간 계산
       const expiration = now() + (expirationHours * 3600);
-
+      console.log(validSubjectAddress);
+      console.log(issuerWallet);
+      console.log(JSON.stringify(validSubjectAddress));
+      console.log(JSON.stringify(issuerWallet));
       // CredentialCreate 트랜잭션 구성
       const transaction = {
         TransactionType: "CredentialCreate",
-        Account: issuerWallet.address,           // 발급자가 서명하고 전송
-        Subject: validSubjectAddress,            // 피발급자
+        Account: issuerWallet.classicAddress,           // 발급자가 서명하고 전송
+        Subject: validSubjectAddress.address,            // 피발급자
         CredentialType: toHex(credentialType),
         Expiration: expiration,
         ...(uri && { URI: toHex(uri) })
@@ -507,7 +531,10 @@ class AccountService {
 
       // 트랜잭션 실행
       const prepared = await this.xrplClient.autofill(transaction);
-      const result = await this.xrplClient.submitAndWait(prepared, { wallet: issuerWallet });
+      const signed   = issuerWallet.sign(prepared);
+      console.log(prepared);
+      console.log(signed);
+      const result = await this.xrplClient.submitAndWait(signed.tx_blob);//prepared, { wallet: issuerWallet }
 
       const txResult = result.result;
       const transactionResult = txResult.meta?.TransactionResult;
@@ -544,11 +571,13 @@ class AccountService {
   /**
    * Credential 수락 - 피발급자가 자격증명을 수락
    */
-  async acceptCredential({ subjectSeed, issuerAddress, credentialType }) {
+  async acceptCredential({ subjectSeed, credentialType }) {
     try {
-      if (!subjectSeed || !issuerAddress || !credentialType) {
-        throw new Error("필수 파라미터가 누락되었습니다: subjectSeed, issuerAddress, credentialType");
+      if (!subjectSeed || !credentialType) {
+        throw new Error("필수 파라미터가 누락되었습니다: subjectSeed, credentialType");
       }
+      const issuerWallet = XRPLClient.walletFromSeed(process.env.ADMIN_SEED);
+      const issuerAddress = issuerWallet.address;
 
       logger.info(`Credential 수락 시작: ${credentialType} from ${issuerAddress}`);
 
@@ -576,6 +605,29 @@ class AccountService {
 
       logger.info(`Credential 수락 ${isSuccess ? "성공" : "실패"}: ${txResult.hash}`);
 
+      if (isSuccess) {
+        // 디비 고치기 - 자격증명 발급 완료 상태로 업데이트
+        try {
+          const { data: updateResult, error: updateError } = await supabase
+            .from('accounts') // 테이블명 (실제 테이블명으로 변경)
+            .update({ 
+              cred: 2,
+              updated_at: new Date().toISOString()
+            })
+            .eq('address', subjectWallet.address) // 피발급자 주소로 찾기
+            .select(); // 업데이트된 데이터 반환
+
+          if (updateError) {
+            logger.error(`계정 cred 업데이트 실패 (${subjectWallet.address}):`, updateError);
+          } else {
+            logger.info(`계정 cred 업데이트 완료 (${subjectWallet.address}): cred = 2`);
+            console.log('업데이트된 데이터:', updateResult);
+          }
+        } catch (dbError) {
+          logger.error('데이터베이스 업데이트 중 예외 발생:', dbError);
+        }
+      }
+     
       return {
         success: isSuccess,
         message: isSuccess ? "자격증명 수락이 완료되었습니다" : `트랜잭션 실패: ${transactionResult}`,

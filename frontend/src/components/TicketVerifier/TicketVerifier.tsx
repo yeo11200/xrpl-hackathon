@@ -32,7 +32,7 @@ const TicketVerifier = () => {
         products_id: Number(productId),
       });
 
-      if (response.success && response.data.status === "success") {
+      if (response.success) {
         setVerificationResult(
           `✅ 결제 검증 성공: ${productName}\n💰 금액: ${price} XRP\n🔗 TX: ${response.data.transactionHash}`
         );

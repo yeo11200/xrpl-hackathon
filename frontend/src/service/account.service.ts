@@ -131,5 +131,7 @@ export const verifyPayment = async (
       body: data,
     }
   );
+
+  console.log(response);
   return response;
 };

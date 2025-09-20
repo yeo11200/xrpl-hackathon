@@ -1,7 +1,11 @@
-import React from "react";
+import React, { useEffect } from "react";
 import "./QpayMinimalShopping.css";
 import { useCryptoPrice } from "../../hooks/useCryptoPrice";
 import { useNavigate } from "react-router-dom";
+import {
+  type Product,
+  fetchProductList,
+} from "../../service/shop.service";
 
 const QpayMinimalShopping = () => {
   const { convertXrpToKrw } = useCryptoPrice();
@@ -62,6 +66,16 @@ const QpayMinimalShopping = () => {
   const formatPrice = (price) => {
     return `₩${price.toLocaleString()}`;
   };
+
+  const getProductList = async () => {
+    const data = await fetchProductList()
+
+    console.log(data)
+  }
+  
+  useEffect(() => {
+    getProductList()
+  }, [])
 
   return (
     <div className="qpay-app">

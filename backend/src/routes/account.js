@@ -374,7 +374,7 @@ router.get("/", async (req, res, next) => {
 
 // XRP 전송
 /**
- * @api {post} /api/account/:address/send 05. XRP 전송
+ * @api {post} /api/account/:address/send 07. XRP 전송
  * @apiName SendXRP
  * @apiGroup Account
  * @apiDescription 송금자 XRPL 계정에서 수신자 계정으로 XRP를 전송합니다.
@@ -488,6 +488,517 @@ router.post("/:address/send",
     }
   }
 );
+
+// XRP 결제
+/**
+ * @api {post} /api/account/:address/payment 05. XRP 결제
+ * @apiName SendXRPPayment
+ * @apiGroup Account
+ * @apiDescription 송금자 XRPL 계정에서 관리자 계정으로 XRP를 전송합니다.
+ * 
+ * @apiParam {String} address 송금자 XRPL 계정 주소 (URL path parameter)
+ * @apiBody {Number} amount 전송할 XRP 양 (XRP 단위) (필수)
+ * @apiBody {Number} products_id 상품 Id (XRP 단위) (필수)
+ * 
+ * @apiParamExample {json} Request-Example:
+ * {
+ *   "amount": 50,
+ *   "products_id" : 1
+ * }
+ * 
+ * @apiSuccess {Boolean} success 요청 성공 여부
+ * @apiSuccess {Object} data 전송 결과 트랜잭션 정보
+ * @apiSuccess {String} data.hash 트랜잭션 해시
+ * @apiSuccess {Number} data.amount 전송된 XRP 양
+ * @apiSuccess {String} data.fromAddress 송신자 주소
+ * @apiSuccess {String} data.toAddress 수신자 주소
+ * @apiSuccess {String} data.timestamp 발생 시간
+ * @apiSuccess {String} data.status 트랜잭션 상태
+ * 
+ * @apiSuccessExample {json} Success-Response:
+ * HTTP/1.1 200 OK
+ * {
+ *   "success": true,
+ *   "data": {
+ *     "hash": "5D8EA63249FE013095E038C2D4A72513AB31D202128E38887C3698353648D299",
+ *     "amount": 50,
+ *     "fromAddress": "rfvKkQNUvwTa1ccTxEmnYuCnGaw1HPy7H7",
+ *     "toAddress": "rADMIN123...",
+ *     "timestamp": "2025-09-20T21:48:00.000Z",
+ *     "status": "success"
+ *   }
+ * }
+ * 
+ * @apiError {Boolean} success=false 요청 실패
+ * @apiError {String} error 오류 메시지
+ * 
+ * @apiErrorExample {json} Account-Not-Found:
+ * HTTP/1.1 404 Not Found
+ * {
+ *   "success": false,
+ *   "error": "Account not found in database"
+ * }
+ * 
+ * @apiErrorExample {json} Secret-Missing:
+ * HTTP/1.1 404 Not Found
+ * {
+ *   "success": false,
+ *   "error": "Secret not available for this address"
+ * }
+ */
+router.post("/:address/payment",
+  // validateRequest(schemas.sendPaymentFromAccount),
+  async (req, res, next) => {
+    try {
+      const { address } = req.params;
+      const { products_id, amount } = req.body;
+
+      // 1) DB에 송신자 주소가 존재하는지 검증
+      const { data: accountRow, error: dbError } = await supabase
+        .from('accounts')
+        .select('address,user_id,secret')
+        .eq('address', address)
+        .maybeSingle();
+      if (dbError) {
+        return res.status(500).json({ success: false, error: dbError.message });
+      }
+      if (!accountRow) {
+        return res.status(404).json({ success: false, error: 'Account not found in database' });
+      }
+
+      // 2) DB에서 시크릿 확보
+      const secret = accountRow.secret || req.body?.secret;
+      if (!secret) {
+        return res.status(404).json({ success: false, error: 'Secret not available for this address' });
+      }
+
+      // 3) 상품 정보 조회
+      const { data: product, error: productError } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', products_id)
+        .eq('is_active', true)
+        .single();
+
+      if (productError || !product) {
+        return res.status(404).json({ 
+          success: false, 
+          error: 'Product not found or inactive' 
+        });
+      }
+
+      // 4) 재고 확인
+      if (product.stock <= 0) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Product out of stock' 
+        });
+      }
+
+      const toAddress = await accountService.getAdminAddress();
+    
+      // 7) 성공 시 일반 XRP 결제도 진행 (선택사항)
+      const txRequest = {
+        fromAddress: address,
+        toAddress: toAddress,
+        amount: parseFloat(amount),
+        secret,
+      };
+
+      const paymentResult = await accountService.sendPayment(txRequest);
+
+      res.json({
+        success: true,
+        data: {
+          payment: paymentResult.success ? paymentResult.transaction : null,
+          product: {
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            category: product.category
+          }
+        }
+      });
+
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// XRP DEX OFFER 검증
+/**
+ * @api {post} /api/account/:address/validation 05-1. XRP 검증
+ * @apiName ValidateXRPPayment  
+ * @apiGroup Account
+ * @apiDescription 송금자 XRPL 계정에서 관리자 계정으로 XRP를 전송 전 검증합니다.
+ * 
+ * @apiParam {String} address 송금자 XRPL 계정 주소 (URL path parameter)
+ * @apiBody {Number} amount 전송할 XRP 양 (XRP 단위) (필수)
+ * @apiBody {Number} products_id 상품 Id (XRP 단위) (필수)
+ * 
+ * @apiParamExample {json} Request-Example:
+ * {
+ *   "amount": 50,
+ *   "products_id" : 1
+ * }
+ * 
+ * @apiSuccess {Boolean} success 요청 성공 여부
+ * @apiSuccess {Object} data 전송 결과 트랜잭션 정보
+ * @apiSuccess {String} data.hash 트랜잭션 해시
+ * @apiSuccess {Number} data.amount 전송된 XRP 양
+ * @apiSuccess {String} data.fromAddress 송신자 주소
+ * @apiSuccess {String} data.toAddress 수신자 주소
+ * @apiSuccess {String} data.timestamp 발생 시간
+ * @apiSuccess {String} data.status 트랜잭션 상태
+ * 
+ * @apiSuccessExample {json} Success-Response:
+ * HTTP/1.1 200 OK
+ * {
+ *   "success": true,
+ *   "data": {
+ *     "hash": "5D8EA63249FE013095E038C2D4A72513AB31D202128E38887C3698353648D299",
+ *     "amount": 50,
+ *     "fromAddress": "rfvKkQNUvwTa1ccTxEmnYuCnGaw1HPy7H7",
+ *     "toAddress": "rADMIN123...",
+ *     "timestamp": "2025-09-20T21:48:00.000Z",
+ *     "status": "success"
+ *   }
+ * }
+ * 
+ * @apiError {Boolean} success=false 요청 실패
+ * @apiError {String} error 오류 메시지
+ * 
+ * @apiErrorExample {json} Account-Not-Found:
+ * HTTP/1.1 404 Not Found
+ * {
+ *   "success": false,
+ *   "error": "Account not found in database"
+ * }
+ * 
+ * @apiErrorExample {json} Secret-Missing:
+ * HTTP/1.1 404 Not Found
+ * {
+ *   "success": false,
+ *   "error": "Secret not available for this address"
+ * }
+ */
+router.post("/:address/validation",
+  // validateRequest(schemas.sendPaymentFromAccount),
+  async (req, res, next) => {
+    try {
+      const { address } = req.params;
+      const { products_id, amount } = req.body;
+
+      // 1) DB에 송신자 주소가 존재하는지 검증
+      const { data: accountRow, error: dbError } = await supabase
+        .from('accounts')
+        .select('address,user_id,secret')
+        .eq('address', address)
+        .maybeSingle();
+      if (dbError) {
+        return res.status(500).json({ success: false, error: dbError.message });
+      }
+      if (!accountRow) {
+        return res.status(404).json({ success: false, error: 'Account not found in database' });
+      }
+
+      // 2) DB에서 시크릿 확보
+      const secret = accountRow.secret || req.body?.secret;
+      if (!secret) {
+        return res.status(404).json({ success: false, error: 'Secret not available for this address' });
+      }
+
+      // 3) 상품 정보 조회
+      const { data: product, error: productError } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', products_id)
+        .eq('is_active', true)
+        .single();
+
+      if (productError || !product) {
+        return res.status(404).json({ 
+          success: false, 
+          error: 'Product not found or inactive' 
+        });
+      }
+
+      // 4) 재고 확인
+      if (product.stock <= 0) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Product out of stock' 
+        });
+      }
+
+      const toAddress = await accountService.getAdminAddress();
+
+      // 5) PermissionedDEX OfferCreate 트랜잭션 실행
+      const permissionedOfferResult = await createPermissionedOfferForProduct({
+        userAddress: address,
+        userSeed: secret,
+        product: product,
+        xrpAmount: parseFloat(amount),
+        merchantAddress: toAddress
+      });
+
+      // 6) PermissionedDEX 결과 확인
+      if (!permissionedOfferResult.success) {
+        // 자격증명 부족 또는 권한 없음
+        if (permissionedOfferResult.credentialError) {
+          return res.status(403).json({
+            success: false,
+            error: 'Insufficient credentials for this transaction',
+            details: permissionedOfferResult.message,
+            credentialRequired: 'XPAY_MEMBER'
+          });
+        }
+        
+        return res.status(400).json({
+          success: false,
+          error: permissionedOfferResult.message
+        });
+      }
+
+      // 7) 성공 시 일반 XRP 결제도 진행 (선택사항)
+      // const txRequest = {
+      //   fromAddress: address,
+      //   toAddress: toAddress,
+      //   amount: parseFloat(amount),
+      //   secret,
+      // };
+
+      // const paymentResult = await accountService.sendPayment(txRequest);
+
+      // res.json({
+      //   success: true,
+      //   data: {
+      //     permissionedOffer: permissionedOfferResult.transaction,
+      //     payment: paymentResult.success ? paymentResult.transaction : null,
+      //     product: {
+      //       id: product.id,
+      //       name: product.name,
+      //       price: product.price,
+      //       category: product.category
+      //     }
+      //   }
+      // });
+
+      // 당초 계획으로는 해당 API를 통해 검증 및 결제를 한번에 하려고 하였으나, 테스트 부족으로 인해 정상적인 동작이 되지 않고
+      // "오퍼 생성 실패: tecUNFUNDED_OFFER - 오퍼를 위한 자금이 부족합니다 (Trust Line 또는 토큰 부족)"와 같은 오류가 발생.
+      // 저희 팀은 정상적인 기능 동작을 우선시 하여, 해당 기능을 별도 API로 분리 후 정상 동작이 되도록 해당 API를 실제 기능에서 
+      // 예외 처리 후 일반 결제만 추가하여 개발하였습니다. 추후 디벨롭을 통해 해당 기능으로 Credentail 검증 후 결제 기능이 동작하도록 
+      // 개발할 예정입니다.
+
+      return res.status(201).json({
+          success: true
+        });
+
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+/**
+ * 안전한 토큰 코드 생성
+ */
+function generateSafeTokenCurrency(productName, productId) {
+  let tokenCode = productName.substring(0, 3).toUpperCase().replace(/[^A-Z0-9]/g, '');
+  
+  // XRP 및 유사한 코드들 제외
+  const reservedCodes = ['XRP', 'BTC', 'ETH', 'USD', 'EUR', 'JPY', 'GBP'];
+  
+  if (reservedCodes.includes(tokenCode) || tokenCode === 'XRP') {
+    // 상품 ID를 이용한 대체 코드 생성
+    tokenCode = `P${productId.toString().padStart(2, '0')}`; // P01, P02, ...
+  }
+  
+  // 3글자 미만인 경우 패딩
+  if (tokenCode.length < 3) {
+    tokenCode = tokenCode.padEnd(3, '0');
+  }
+  
+  return tokenCode;
+}
+
+/**
+ * 개선된 DEX 오퍼 생성 (자세한 로깅 추가)
+ */
+async function createPermissionedOfferForProduct({ 
+  userAddress, 
+  userSeed, 
+  product, 
+  xrpAmount, 
+  merchantAddress 
+}) {
+  const { Client, Wallet } = require("xrpl");
+  const client = new Client("wss://s.devnet.rippletest.net:51233");
+  
+  try {
+    await client.connect();
+
+    const userWallet = Wallet.fromSeed(userSeed);
+    
+    logger.info(`DEX 오퍼 생성 시작: ${product.name} (사용자: ${userAddress})`);
+
+    // ✅ 계정 잔액 확인
+    try {
+      const accountInfo = await client.request({
+        command: "account_info",
+        account: userWallet.address,
+        ledger_index: "validated"
+      });
+      
+      const balanceXRP = parseFloat(accountInfo.result.account_data.Balance) / 1000000;
+      logger.info(`사용자 잔액: ${balanceXRP} XRP, 필요 금액: ${xrpAmount} XRP`);
+      
+      if (balanceXRP < xrpAmount + 0.1) { // 수수료 고려
+        return {
+          success: false,
+          message: `잔액 부족: 현재 ${balanceXRP} XRP, 필요 ${xrpAmount + 0.1} XRP`,
+          transaction: null
+        };
+      }
+    } catch (balanceError) {
+      logger.error("잔액 확인 실패:", balanceError);
+      return {
+        success: false,
+        message: "계정 정보 조회 실패",
+        transaction: null
+      };
+    }
+
+    // 안전한 토큰 코드 생성
+    const tokenCurrency = generateSafeTokenCurrency(product.name, product.id);
+    const tokenValue = "1";
+
+    logger.info(`생성된 토큰 코드: ${tokenCurrency} (상품: ${product.name})`);
+
+    const offerTx = {
+      TransactionType: "OfferCreate",
+      Account: userWallet.address,
+      TakerPays: (xrpAmount * 1000000).toString(),
+      TakerGets: {
+        currency: tokenCurrency,
+        issuer: merchantAddress,
+        value: tokenValue
+      },
+      Memos: [{
+        Memo: {
+          MemoType: toHex("PRODUCT_PURCHASE"),
+          MemoData: toHex(JSON.stringify({
+            productId: product.id,
+            productName: product.name,
+            productPrice: product.price,
+            purchaseAmount: xrpAmount,
+            tokenCurrency: tokenCurrency
+          }))
+        }
+      }]
+    };
+
+    // ✅ 더 자세한 트랜잭션 로깅
+    logger.info("DEX 오퍼 트랜잭션 상세:", {
+      account: offerTx.Account,
+      takerPays: offerTx.TakerPays,
+      takerGets: offerTx.TakerGets,
+      tokenCurrency: tokenCurrency,
+      merchantAddress: merchantAddress
+    });
+
+    const prepared = await client.autofill(offerTx);
+    logger.info("트랜잭션 autofill 완료. Fee:", prepared.Fee);
+
+    const signed = userWallet.sign(prepared);
+    const result = await client.submitAndWait(signed.tx_blob);
+
+    const txResult = result.result;
+    const transactionResult = txResult.meta?.TransactionResult;
+    const isSuccess = transactionResult === "tesSUCCESS";
+
+    // ✅ 실패 상세 정보 로깅
+    if (!isSuccess) {
+      logger.error("DEX 오퍼 실패 상세:", {
+        hash: txResult.hash,
+        transactionResult: transactionResult,
+        engineResult: txResult.engine_result,
+        engineResultMessage: txResult.engine_result_message,
+        meta: txResult.meta
+      });
+    }
+
+    logger.info(`DEX 오퍼 ${isSuccess ? "성공" : "실패"}: ${txResult.hash} (${transactionResult})`);
+
+    return {
+      success: isSuccess,
+      credentialError: false,
+      hash: txResult.hash,
+      message: isSuccess ? 
+        "DEX 오퍼가 성공적으로 생성되었습니다" : 
+        `오퍼 생성 실패: ${transactionResult} - ${getErrorMessage(transactionResult)}`,
+      transaction: {
+        hash: txResult.hash,
+        userAddress: userWallet.address,
+        merchantAddress,
+        product: {
+          id: product.id,
+          name: product.name,
+          tokenCurrency,
+          tokenValue
+        },
+        xrpAmount,
+        timestamp: new Date().toISOString(),
+        status: isSuccess ? "created" : "failed",
+        transactionResult,
+        errorDetails: !isSuccess ? {
+          engineResult: txResult.engine_result,
+          engineResultMessage: txResult.engine_result_message
+        } : null
+      }
+    };
+
+  } catch (error) {
+    logger.error("DEX 오퍼 생성 실패:", error);
+    return {
+      success: false,
+      credentialError: false,
+      message: error.message,
+      transaction: null
+    };
+  } finally {
+    await client.disconnect();
+  }
+}
+
+/**
+ * XRPL 오류 코드 해석
+ */
+function getErrorMessage(transactionResult) {
+  const errorMessages = {
+    "tecUNFUNDED_OFFER": "오퍼를 위한 자금이 부족합니다 (Trust Line 또는 토큰 부족)",
+    "tecNO_LINE_INSUF_RESERVE": "Trust Line 설정을 위한 준비금 부족",
+    "tecINSUF_RESERVE_OFFER": "오퍼 생성을 위한 준비금 부족",
+    "tecOBJECT_NOT_FOUND": "참조된 객체를 찾을 수 없습니다",
+    "tecPATH_DRY": "결제 경로를 찾을 수 없습니다",
+    "tefMASTER_DISABLED": "마스터 키가 비활성화되었습니다",
+    "telINSUF_FEE_P": "트랜잭션 수수료가 부족합니다",
+    "temBAD_CURRENCY": "잘못된 통화 코드입니다",
+    "temBAD_ISSUER": "잘못된 발행자 주소입니다"
+  };
+  
+  return errorMessages[transactionResult] || "알 수 없는 오류";
+}
+
+/**
+ * 문자열을 HEX로 변환
+ */
+function toHex(str) {
+  if (!str) return '';
+  return Buffer.from(str, 'utf8').toString('hex').toUpperCase();
+}
+
 
 // 트랜잭션 내역 조회
 /**

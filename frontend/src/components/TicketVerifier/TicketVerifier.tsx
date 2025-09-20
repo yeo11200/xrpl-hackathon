@@ -4,57 +4,38 @@ import { motion } from "framer-motion";
 import { verifyPayment } from "../../service/account.service";
 import "./TicketVerifier.css";
 
-export type VerificationResponse = {
-  status: string;
-  data: {
-    event_name: string;
-    ticket_id: number;
-    status: string;
-  };
-};
-
 const TicketVerifier = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [verificationResult, setVerificationResult] = useState<string | null>(
     null
   );
-  const [eventSymbol] = useState<string>(
-    localStorageUtil.get("eventsymbol") || ""
-  );
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleVerifyTicket = useCallback(
-    async (scannedData: string) => {
-      try {
-        const { userId, ticketId } = JSON.parse(scannedData);
+  const handleVerifyTicket = useCallback(async (scannedData: string) => {
+    try {
+      const qrData = JSON.parse(scannedData);
+      const { buyerAddress, price, productId, productName } = qrData;
 
-        console.log({
-          user_id: userId,
-          event_symbol: eventSymbol,
-          ticket_id: ticketId,
-        });
+      console.log("스캔된 QR 데이터:", qrData);
 
-        const response = await fetchApi<VerificationResponse>(
-          "/ticket/verify",
-          {
-            method: "POST",
-            body: {
-              user_id: userId,
-              event_symbol: eventSymbol,
-              ticket_id: `${ticketId}`,
-            },
-          }
-        );
+      const response = await verifyPayment(buyerAddress, {
+        amount: Number(price),
+        products_id: Number(productId),
+      });
+
+      if (response.success && response.data.status === "success") {
         setVerificationResult(
-          `✅ 티켓 검증 성공: ${response.data.event_name}, 상태: ${response.data.status}`
+          `✅ 결제 검증 성공: ${productName}\n💰 금액: ${price} XRP\n🔗 TX: ${response.data.transactionHash}`
         );
-      } catch (err) {
-        setError(err.message || "티켓 검증에 실패했습니다.");
+      } else {
+        throw new Error(response.data.message || "결제 검증 실패");
       }
-    },
-    [eventSymbol]
-  );
+    } catch (err) {
+      console.error("검증 실패:", err);
+      setError(err.message || "QR 코드 검증에 실패했습니다.");
+    }
+  }, []);
 
   useEffect(() => {
     if (videoRef.current) {

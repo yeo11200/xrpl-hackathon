@@ -3,19 +3,27 @@ import QrScanner from "qr-scanner";
 import { motion } from "framer-motion";
 import { verifyPayment } from "../../service/account.service";
 import "./TicketVerifier.css";
+import { useAuth } from "../../hooks/useAuth";
 
 const TicketVerifier = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [verificationResult, setVerificationResult] = useState<string | null>(
     null
   );
+  const { xrplAccount } = useAuth();
+
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleVerifyTicket = useCallback(async (scannedData: string) => {
     try {
       const qrData = JSON.parse(scannedData);
-      const { buyerAddress, price, productId, productName } = qrData;
+      const {
+        buyerAddress = xrplAccount?.address || "",
+        price,
+        productId,
+        productName,
+      } = qrData;
 
       console.log("스캔된 QR 데이터:", qrData);
 

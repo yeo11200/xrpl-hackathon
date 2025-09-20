@@ -47,11 +47,6 @@ const TicketQRCodePopup: React.FC<Props> = ({ isOpen, onClose, qrData }) => {
           </div>
 
           <div className="info-row">
-            <span className="info-label">구매자 주소</span>
-            <span className="info-value address">{qrData.buyerAddress}</span>
-          </div>
-
-          <div className="info-row">
             <span className="info-label">가격</span>
             <span className="info-value price">{qrData.price} XRP</span>
           </div>

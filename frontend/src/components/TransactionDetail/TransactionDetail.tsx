@@ -251,7 +251,9 @@ const TransactionDetail: React.FC<TransactionDetailProps> = ({
                           <div className="info-item">
                             <label>전달된 금액</label>
                             <span>
-                              {formatAmount(transaction.meta.delivered_amount)}
+                              {formatAmount(
+                                transaction.meta.delivered_amount as string
+                              )}
                             </span>
                           </div>
                         )}

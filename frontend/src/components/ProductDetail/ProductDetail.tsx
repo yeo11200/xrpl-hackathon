@@ -1,136 +1,145 @@
-import React, { useState } from 'react';
-import './ProductDetail.css';
+import React, { useState } from "react";
+import "./ProductDetail.css";
 
 interface Product {
   id: number;
   name: string;
   originalPrice: number;
   salePrice: number;
-  discount: string;
   rating: number;
   reviews: number;
   category: string;
   brand: string;
   image: string;
-  icon: string;
   description: string;
   features: string[];
 }
 
-const ProductDetail: React.FC = () => {
+const Stars: React.FC<{ rating: number }> = ({ rating }) => {
+  const full = Math.floor(rating);
+  const half = rating - full >= 0.5;
+  const empty = 5 - full - (half ? 1 : 0);
+  return (
+    <span aria-label={`평점 ${rating} / 5`} className="stars">
+      {"★".repeat(full)}
+      {half ? "☆" : ""}
+      {"✩".repeat(Math.max(0, empty))}
+    </span>
+  );
+};
+
+const formatPrice = (price: number): string =>
+  new Intl.NumberFormat("ko-KR", { style: "currency", currency: "KRW" }).format(
+    price
+  );
+
+export default function ProductDetail() {
   const [cartCount, setCartCount] = useState<number>(0);
   const [quantity, setQuantity] = useState<number>(1);
 
   const product: Product = {
-    id: 3,
-    name: "Wireless Headphones",
-    originalPrice: 450000,
-    salePrice: 270000,
-    discount: "40% OFF",
-    rating: 4.8,
-    reviews: 1247,
-    category: "Audio",
+    id: 2,
+    name: "Ultra-thin Laptop",
+    originalPrice: 1800000,
+    salePrice: 1350000,
+    rating: 4.9,
+    reviews: 892,
+    category: "Electronics",
     brand: "Qpay",
-    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600",
-    icon: "🎧",
-    description: "프리미엄 노이즈 캔슬링 헤드폰. 완벽한 음질과 편안한 착용감을 제공합니다.",
+    image:
+      "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=1200&auto=format&fit=crop",
+    description:
+      "초경량 울트라씬 노트북. 어디서나 휴대 가능한 강력한 성능을 경험하세요.",
     features: [
-      "액티브 노이즈 캔슬링",
-      "30시간 배터리 수명",
-      "고해상도 오디오 지원",
-      "편안한 오버이어 디자인",
-      "멀티포인트 연결",
-      "빠른 충전 (15분 충전 3시간 재생)"
-    ]
+      "14인치 고해상도 디스플레이",
+      "최신형 칩셋",
+      "16GB 메모리",
+      "512GB SSD",
+      "최대 18시간 배터리",
+      "무게 1.4kg",
+    ],
   };
 
-  const formatPrice = (price: number): string => {
-    return new Intl.NumberFormat('ko-KR').format(price);
-  };
+  const discountPct = Math.round(
+    (1 - product.salePrice / product.originalPrice) * 100
+  );
 
-  const handleAddToCart = (): void => {
-    setCartCount(cartCount + quantity);
-  };
-
-  const handleQuantityChange = (change: number): void => {
-    const newQuantity = quantity + change;
-    if (newQuantity >= 1) {
-      setQuantity(newQuantity);
-    }
-  };
-
-  const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>): void => {
-    e.currentTarget.style.backgroundColor = '#333';
-  };
-
-  const handleMouseLeave = (e: React.MouseEvent<HTMLButtonElement>): void => {
-    e.currentTarget.style.backgroundColor = '#000';
-  };
+  const handleAddToCart = (): void => setCartCount((prev) => prev + quantity);
+  const handleQuantityChange = (change: number): void =>
+    setQuantity((prev) => Math.max(1, prev + change));
 
   return (
-    <div className="app">
+    <div className="page">
       {/* Header */}
       <header className="header">
-        <div className="header-container">
-          <div className="logo">
-            Qpay
-          </div>
-          
+        <div className="container header-inner">
+          <div className="brand">Qpay</div>
           <nav className="nav">
-            <a href="#" className="nav-link">Products</a>
-            <a href="#" className="nav-link">About</a>
-            <a href="#" className="nav-link">Contact</a>
-            
+            <a
+              href="#"
+              onClick={(e) => e.preventDefault()}
+              className="nav-link"
+            >
+              🔍
+            </a>
+            <a
+              href="#"
+              onClick={(e) => e.preventDefault()}
+              className="nav-link"
+            >
+              ❤️
+            </a>
+            <a
+              href="#"
+              onClick={(e) => e.preventDefault()}
+              className="nav-link"
+            >
+              📞
+            </a>
             <div className="cart-badge">
-              Cart {cartCount > 0 && `(${cartCount})`}
+              로그인 {cartCount > 0 && `(${cartCount})`}
             </div>
           </nav>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="main">
+      {/* Main */}
+      <main className="container main">
         {/* Breadcrumb */}
         <div className="breadcrumb">
-          <span>Home</span>
-          <span className="breadcrumb-separator">→</span>
-          <span>Audio</span>
-          <span className="breadcrumb-separator">→</span>
-          <span className="breadcrumb-current">Wireless Headphones</span>
+          <span>홈</span>
+          <span className="crumb-gap">→</span>
+          <span>Electronics</span>
+          <span className="crumb-gap">→</span>
+          <span className="current">Ultra-thin Laptop</span>
         </div>
 
         {/* Product Section */}
-        <div className="product-section">
-          {/* Product Image */}
-          <div className="product-image-container">
-            <div className="product-image-wrapper">
-              <img 
+        <div className="grid">
+          {/* Image */}
+          <div className="img-wrap">
+            <div className="img-frame">
+              <img
                 src={product.image}
                 alt={product.name}
-                className="product-image"
+                loading="lazy"
+                decoding="async"
+                className="img"
               />
             </div>
-            
-            {/* Discount Badge */}
-            <div className="discount-badge">
-              {product.discount}
-            </div>
+            <div className="badge">{discountPct}% OFF</div>
           </div>
 
-          {/* Product Info */}
-          <div className="product-info">
-            <div className="product-header">
-              <div className="product-category">
+          {/* Info */}
+          <div>
+            <div className="meta">
+              <div className="meta-line">
                 {product.category} • {product.brand}
               </div>
-              
-              <h1 className="product-title">
-                {product.name}
-              </h1>
-              
-              <div className="product-rating">
-                <div className="rating-stars">
-                  <span className="stars">★★★★★</span>
+              <h1 className="title">{product.name}</h1>
+              <div className="rating">
+                <div className="rating-row">
+                  <Stars rating={product.rating} />
                   <span className="rating-text">
                     {product.rating} ({product.reviews} reviews)
                   </span>
@@ -139,81 +148,71 @@ const ProductDetail: React.FC = () => {
             </div>
 
             {/* Price */}
-            <div className="price-section">
-              <div className="price-container">
-                <span className="sale-price">
-                  ₩{formatPrice(product.salePrice)}
+            <div>
+              <div className="price">
+                <span className="price-now">
+                  {formatPrice(product.salePrice)}
                 </span>
-                <span className="original-price">
-                  ₩{formatPrice(product.originalPrice)}
+                <span className="price-old">
+                  {formatPrice(product.originalPrice)}
                 </span>
               </div>
-              <p className="product-description">
-                {product.description}
-              </p>
+              <p className="desc">{product.description}</p>
             </div>
 
             {/* Features */}
-            <div className="features-section">
-              <h3 className="features-title">
-                주요 특징
-              </h3>
-              <div className="features-list">
-                {product.features.map((feature, index) => (
-                  <div key={index} className="feature-item">
-                    <div className="feature-bullet"></div>
-                    <span className="feature-text">
-                      {feature}
-                    </span>
+            <div className="features">
+              <h3 className="features-title">주요 특징</h3>
+              <div className="feature-list">
+                {product.features.map((f, i) => (
+                  <div key={i} className="feature-item">
+                    <span className="dot" />
+                    <span>{f}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Quantity & Add to Cart */}
-            <div className="cart-section">
-              <div className="quantity-selector">
+            <div className="cta-row">
+              <div className="qty">
                 <button
+                  type="button"
+                  aria-label="수량 감소"
+                  className="qty-btn"
                   onClick={() => handleQuantityChange(-1)}
-                  className="quantity-btn quantity-btn-minus"
-                  aria-label="Decrease quantity"
-                  disabled={quantity <= 1}
                 >
                   −
                 </button>
-                <span className="quantity-display" aria-label={`Current quantity: ${quantity}`}>
-                  {quantity}
-                </span>
+                <span className="qty-val">{quantity}</span>
                 <button
+                  type="button"
+                  aria-label="수량 증가"
+                  className="qty-btn"
                   onClick={() => handleQuantityChange(1)}
-                  className="quantity-btn quantity-btn-plus"
-                  aria-label="Increase quantity"
                 >
                   +
                 </button>
               </div>
-
               <button
+                type="button"
+                className="add-btn"
                 onClick={handleAddToCart}
-                className="add-to-cart-btn"
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
-                aria-label="Add item to cart"
               >
                 Add to Cart
               </button>
             </div>
 
             {/* Additional Info */}
-            <div className="additional-info">
-              <div className="info-item">
+            <div className="info">
+              <div className="info-line">
                 <strong>무료 배송</strong> - 2-3일 내 배송
               </div>
-              <div className="info-item">
+              <div className="info-line">
                 <strong>30일 무료 반품</strong> - 사용하지 않은 제품
               </div>
-              <div className="info-item">
-                <strong>1년 보증</strong> - 제조사 보증 포함
+              <div className="info-line">
+                <strong>2년 보증</strong> - 제조사 보증 포함
               </div>
             </div>
           </div>
@@ -222,25 +221,41 @@ const ProductDetail: React.FC = () => {
 
       {/* Footer */}
       <footer className="footer">
-        <div className="footer-container">
-          <div className="footer-logo">
-            Qpay
+        <div className="container" style={{ textAlign: "center" }}>
+          <div className="footer-brand">Qpay</div>
+          <div className="footer-links">
+            <a
+              href="#"
+              onClick={(e) => e.preventDefault()}
+              className="footer-link"
+            >
+              About
+            </a>
+            <a
+              href="#"
+              onClick={(e) => e.preventDefault()}
+              className="footer-link"
+            >
+              Products
+            </a>
+            <a
+              href="#"
+              onClick={(e) => e.preventDefault()}
+              className="footer-link"
+            >
+              Support
+            </a>
+            <a
+              href="#"
+              onClick={(e) => e.preventDefault()}
+              className="footer-link"
+            >
+              Privacy
+            </a>
           </div>
-          
-          <div className="footer-nav">
-            <a href="#" className="footer-link">About</a>
-            <a href="#" className="footer-link">Products</a>
-            <a href="#" className="footer-link">Support</a>
-            <a href="#" className="footer-link">Privacy</a>
-          </div>
-          
-          <div className="footer-copyright">
-            © 2024 Qpay. All rights reserved.
-          </div>
+          <div className="footer-copy">© 2024 Qpay. All rights reserved.</div>
         </div>
       </footer>
     </div>
   );
-};
-
-export default ProductDetail;
+}

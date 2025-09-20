@@ -16,8 +16,8 @@ import { initXrplClient } from "./utils/xrpl-client";
 import { SellerPage } from "./pages/SellerPage";
 import { QpayMinimalShoppingPage } from "./pages/QpayMinimalShoppingPage";
 import { MyPage } from "./pages/MyPage";
-import { ProductDetailPage } from "./pages/ProductDetailPage";
 import { CryptoPriceProvider } from "./contexts/CryptoPriceContext";
+import { ProductDetailPage } from "./pages/ProductDetailPage";
 
 // 페이지 컴포넌트 예시
 const PageWrapper = ({ children }: { children: React.ReactNode }) => {

@@ -47,29 +47,44 @@ app.use(
 );
 
 // CORS 허용 도메인 설정
-const allowedOrigins =
-  process.env.NODE_ENV === "production"
-    ? [
-        process.env.FRONTEND_URL || "https://yourdomain.com",
-        "https://api.coingecko.com",
-        process.env.SUPABASE_URL, // Supabase URL
-        "http://localhost:5173",
-      ].filter(Boolean) // undefined 값 제거
-    : [
-        "http://localhost:3000",
-        "http://localhost:3001",
-        "http://localhost:5173",
-        "https://api.coingecko.com",
-      ];
+const allowedOrigins = [
+  // 개발 환경
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "http://localhost:5173",
+  // API 도메인
+  "https://api.coingecko.com",
+  // 배포 도메인
+  process.env.FRONTEND_URL || "https://yourdomain.com",
+  // Supabase
+  process.env.SUPABASE_URL,
+  // Cloudtype 도메인
+  "https://port-0-xrpl-hackathon-mawg9la9662519f8.sel4.cloudtype.app",
+  // 모든 cloudtype 도메인 허용
+  ".cloudtype.app",
+].filter(Boolean); // undefined 값 제거
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // origin이 없거나(같은 도메인) 허용된 도메인이면 허용
-      if (!origin || allowedOrigins.includes(origin)) {
+      // origin이 없거나(같은 도메인)
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      // 허용된 도메인 체크
+      const isAllowed = allowedOrigins.some((allowedOrigin) => {
+        // 와일드카드 도메인 처리 (예: .cloudtype.app)
+        if (allowedOrigin.startsWith(".")) {
+          return origin.endsWith(allowedOrigin);
+        }
+        return origin === allowedOrigin;
+      });
+
+      if (isAllowed) {
         callback(null, true);
       } else {
-        callback(new Error("Not allowed by CORS"));
+        callback(new Error(`Not allowed by CORS: ${origin}`));
       }
     },
     credentials: true,

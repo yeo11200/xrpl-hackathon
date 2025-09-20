@@ -51,12 +51,12 @@ export default function ProductDetail() {
     description:
       "초경량 울트라씬 노트북. 어디서나 휴대 가능한 강력한 성능을 경험하세요.",
     features: [
-      "14인치 고해상도 디스플레이",
-      "최신형 칩셋",
-      "16GB 메모리",
-      "512GB SSD",
-      "최대 18시간 배터리",
-      "무게 1.4kg",
+      "💻 강력한 성능의 M4 칩 탑재한 초고성능 프로세서",
+      "🔋 온종일 사용 가능한 최대 24시간 배터리 사용 시간", 
+      "🧠 Apple Intelligence를 위한 탄생. 더 스마트하게.",
+      "🖥️ 35.9cm Liquid Retina XDR 디스플레이",
+      "📷 12MP Center Stage 카메라와 스튜디오급 마이크",
+      "🔌 MagSafe, Thunderbolt 4 포트로 완벽한 연결성"
     ],
   };
 
@@ -199,8 +199,16 @@ export default function ProductDetail() {
                 className="add-btn"
                 onClick={handleAddToCart}
               >
-                Add to Cart
-              </button>
+                   Add to Cart
+                  </button>
+                  <button
+                    type="button"
+                    className="buy-now-btn"
+                    onClick={() => alert('즉시 구매 기능')}
+                  >
+                    즉시 구매
+                  </button>
+                </div>
             </div>
 
             {/* Additional Info */}
@@ -215,9 +223,8 @@ export default function ProductDetail() {
                 <strong>2년 보증</strong> - 제조사 보증 포함
               </div>
             </div>
-          </div>
-        </div>
-      </main>
+           </div>
+          </main>
 
       {/* Footer */}
       <footer className="footer">

@@ -159,10 +159,10 @@
   color: #333;
   transition: all 0.3s ease;
   position: relative;
-  padding: 8px 12px;
+  padding: 8px 5px;
   border-radius: 25px;
   font-weight: 500;
-  margin-left: -20px;
+  margin-left: -12px;
 }
 
 .nav-button-h {
@@ -187,7 +187,7 @@
 .nav-button.primary {
   background: #000;
   color: #fff;
-  padding: 10px 20px;
+  padding: 10px 10px;
   border-radius: 25px;
   font-weight: 600;
   text-transform: uppercase;

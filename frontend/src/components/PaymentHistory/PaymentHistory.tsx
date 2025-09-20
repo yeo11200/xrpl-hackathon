@@ -7,7 +7,7 @@ import "./PaymentHistory.css";
 interface PaymentTransaction {
   id: string;
   hash: string;
-  type: "purchase" | "refund" | "transfer";
+  type: "purchase" | "refund" | "transfer" | "delivery";
   productName?: string;
   amount: number;
   currency: "XRP" | "USD";
@@ -46,7 +46,7 @@ const PaymentHistory = () => {
       type: "transfer",
       amount: 50000,
       currency: "XRP",
-      status: "completed",
+      status: "pending",
       date: "2024-03-14T15:45:00Z",
       counterparty: "rFRIEND456...ABC",
       description: "친구에게 송금",
@@ -58,7 +58,7 @@ const PaymentHistory = () => {
       productName: "온라인 세미나 입장권",
       amount: 60000,
       currency: "XRP",
-      status: "completed",
+      status: "failed",
       date: "2024-03-13T09:15:00Z",
       counterparty: "rEDUCATOR789...DEF",
       description: "비즈니스 세미나 참가권",
@@ -74,6 +74,18 @@ const PaymentHistory = () => {
       date: "2024-03-12T14:20:00Z",
       counterparty: "rWORKSHOP234...GHI",
       description: "워크샵 취소로 인한 환불",
+    },
+    {
+      id: "5",
+      hash: "M5N6O7P8Q9R0S1T2U3V4W5X6Y7Z8A9B0C1D2E3F4G5H6I7J8K9L0M1N2O3P4Q5R6",
+      type: "delivery",
+      productName: "워크샵 참가권",
+      amount: 25000,
+      currency: "XRP",
+      status: "completed",
+      date: "2024-03-12T14:20:00Z",
+      counterparty: "rWORKSHOP234...GHI",
+      description: "배송중",
     },
   ];
 
@@ -118,6 +130,8 @@ const PaymentHistory = () => {
         return "💸";
       case "transfer":
         return "💰";
+      case "delivery":
+        return "📦";
       default:
         return "💳";
     }
@@ -126,11 +140,13 @@ const PaymentHistory = () => {
   const getTypeLabel = (type: string) => {
     switch (type) {
       case "purchase":
-        return "구매";
+        return "주문";
       case "refund":
         return "환불";
       case "transfer":
-        return "송금";
+        return "결제 완료";
+      case "delivery":
+        return "배송 현황";
       default:
         return "기타";
     }
@@ -203,7 +219,7 @@ const PaymentHistory = () => {
             {[
               { key: "all", label: "전체" },
               { key: "purchase", label: "구매" },
-              { key: "transfer", label: "송금" },
+              { key: "transfer", label: "결제 완료" },
               { key: "refund", label: "환불" },
               { key: "delivery", label: "배송 현황" },
             ].map((tab, index) => (

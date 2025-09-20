@@ -56,6 +56,7 @@ const allowedOrigins = [
   // API 도메인
   "https://api.coingecko.com",
   "https://xrpl-hackathon.vercel.app/",
+  "https://xrpl-hackathon-57qt88uqp-jacobs-projects-de764ef2.vercel.app",
   // 배포 도메인
   process.env.FRONTEND_URL || "https://yourdomain.com",
   // Supabase

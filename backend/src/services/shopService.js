@@ -498,12 +498,3 @@ module.exports = {
   clearCart,
   createOrUpdateCartSession
 };
-
-module.exports = {
-  getProducts,
-  getProductById,
-  getCategories,
-  checkStock,
-  updateStock,
-  getShopStats
-};

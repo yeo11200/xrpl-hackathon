@@ -117,9 +117,9 @@ class AccountService {
           .upsert({
             address: newLoadedAccount.address,
             user_id: newLoadedAccount.userId,
-            secret: wallet.seed,
-            publicKey: wallet.publicKey,
-            privateKey: wallet.privateKey,
+            secret: newAccount.secret,
+            public_key: newAccount.publicKey,
+            private_key: newAccount.privateKey,
             balance_xrp: newLoadedAccount.balanceXRP,
             balance_drops: newLoadedAccount.balance,
             sequence: newLoadedAccount.sequence,

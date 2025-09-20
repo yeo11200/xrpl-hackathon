@@ -15,24 +15,41 @@ const errorHandler = require("./middleware/errorHandler");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// app.use('/api-docs', (req, res, next) => {
-//   res.removeHeader('Content-Security-Policy');
-//   next();
-// });
-// apiDoc 문서 서빙
-app.use('/api-docs', express.static(path.join(__dirname, '../apidoc')));
-
 // Security middleware
-app.use(helmet({
-  contentSecurityPolicy: false,  // apiDoc 호환성을 위해 CSP 비활성화
-}));
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "https:"],
+        connectSrc: ["'self'"],
+      },
+    },
+  })
+);
+
+// apiDoc 문서 서빙 (CSP 헤더 제거)
+app.use(
+  "/api-docs",
+  (req, res, next) => {
+    res.removeHeader("Content-Security-Policy");
+    next();
+  },
+  express.static(path.join(__dirname, "../apidoc"))
+);
 
 app.use(
   cors({
     origin:
       process.env.NODE_ENV === "production"
-        ? ["https://yourdomain.com"]
-        : ["http://localhost:3000", "http://localhost:3001"],
+        ? [process.env.FRONTEND_URL || "https://yourdomain.com"]
+        : [
+            "http://localhost:3000",
+            "http://localhost:3001",
+            "http://localhost:5173",
+          ],
     credentials: true,
   })
 );
@@ -105,4 +122,3 @@ process.on("SIGINT", () => {
 });
 
 module.exports = app;
-

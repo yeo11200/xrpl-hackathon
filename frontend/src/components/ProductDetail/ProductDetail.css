@@ -776,7 +776,7 @@ input:focus {
   flex: 1;
   background: var(--black);
   color: var(--white);
-  border: 0;
+  border: 2px solid var(--white);
   border-radius: 8px;
   padding: 16px 24px;
   font-size: 16px;
@@ -809,4 +809,49 @@ input:focus {
     flex-direction: column;
     width: 100%;
   }
+}
+
+/* 버튼 공통 애니메이션 스타일 */
+.add-btn,
+.buy-now-btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+/* 공통 빛나는 효과 */
+.add-btn::before,
+.buy-now-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+/* 호버 시 공통 효과 */
+.add-btn:hover::before,
+.buy-now-btn:hover::before {
+  left: 100%;
+}
+
+.add-btn:hover,
+.buy-now-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* 클릭 시 공통 효과 */
+.add-btn:active,
+.buy-now-btn:active {
+  transform: translateY(0);
+}
+
+/* 즉시 구매 버튼 호버 시 배경색 변경 */
+.buy-now-btn:hover {
+  background: var(--black);
+  color: var(--white);
 }

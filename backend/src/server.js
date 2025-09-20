@@ -46,11 +46,23 @@ app.use(
   express.static(path.join(__dirname, "../apidoc"))
 );
 
-// CORS 설정 - 모든 도메인 허용
+// CORS 설정
 app.use(
   cors({
-    origin: "*", // 모든 도메인 허용
+    origin: function (origin, callback) {
+      // 모든 origin 허용
+      callback(null, origin || true);
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "Accept",
+    ],
+    exposedHeaders: ["Content-Range", "X-Content-Range"],
+    maxAge: 600, // 캐시 시간 10분
   })
 );
 

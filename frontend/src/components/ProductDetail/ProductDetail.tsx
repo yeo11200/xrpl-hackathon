@@ -34,7 +34,6 @@ const formatPrice = (price: number): string =>
   );
 
 export default function ProductDetail() {
-  const [cartCount, setCartCount] = useState<number>(0);
   const [quantity, setQuantity] = useState<number>(1);
 
   const product: Product = {
@@ -64,45 +63,12 @@ export default function ProductDetail() {
     (1 - product.salePrice / product.originalPrice) * 100
   );
 
-  const handleAddToCart = (): void => setCartCount((prev) => prev + quantity);
   const handleQuantityChange = (change: number): void =>
     setQuantity((prev) => Math.max(1, prev + change));
 
   return (
     <div className="page">
-      {/* Header */}
-      <header className="header">
-        <div className="container header-inner">
-          <div className="brand">Qpay</div>
-          <nav className="nav">
-            <a
-              href="#"
-              onClick={(e) => e.preventDefault()}
-              className="nav-link"
-            >
-              🔍
-            </a>
-            <a
-              href="#"
-              onClick={(e) => e.preventDefault()}
-              className="nav-link"
-            >
-              ❤️
-            </a>
-            <a
-              href="#"
-              onClick={(e) => e.preventDefault()}
-              className="nav-link"
-            >
-              📞
-            </a>
-            <div className="cart-badge">
-              로그인 {cartCount > 0 && `(${cartCount})`}
-            </div>
-          </nav>
-        </div>
-      </header>
-
+      {" "}
       {/* Main */}
       <main className="container main">
         {/* Breadcrumb */}
@@ -194,11 +160,7 @@ export default function ProductDetail() {
                   +
                 </button>
               </div>
-              <button
-                type="button"
-                className="add-btn"
-                onClick={handleAddToCart}
-              >
+              <button type="button" className="add-btn" onClick={() => {}}>
                 Add to Cart
               </button>
             </div>
@@ -218,44 +180,6 @@ export default function ProductDetail() {
           </div>
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="footer">
-        <div className="container" style={{ textAlign: "center" }}>
-          <div className="footer-brand">Qpay</div>
-          <div className="footer-links">
-            <a
-              href="#"
-              onClick={(e) => e.preventDefault()}
-              className="footer-link"
-            >
-              About
-            </a>
-            <a
-              href="#"
-              onClick={(e) => e.preventDefault()}
-              className="footer-link"
-            >
-              Products
-            </a>
-            <a
-              href="#"
-              onClick={(e) => e.preventDefault()}
-              className="footer-link"
-            >
-              Support
-            </a>
-            <a
-              href="#"
-              onClick={(e) => e.preventDefault()}
-              className="footer-link"
-            >
-              Privacy
-            </a>
-          </div>
-          <div className="footer-copy">© 2024 Qpay. All rights reserved.</div>
-        </div>
-      </footer>
     </div>
   );
 }

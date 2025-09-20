@@ -11,7 +11,7 @@ const QpayMinimalShopping = () => {
     {
       id: 1,
       name: "Premium Smartphone",
-      originalPrice: 1200000,
+      originalPrice: convertXrpToKrw(1200000),
       salePrice: 840000,
       discount: "30% OFF",
       description:

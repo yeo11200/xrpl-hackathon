@@ -57,7 +57,7 @@ export const getXRPLAccountByAddress = async (
   address: string
 ): Promise<XRPLAccount> => {
   const response = await fetchApi<ApiResponse<XRPLAccount>>(
-    `/api/account/address/${address}`
+    `/api/account/${address}`
   );
   return response.data;
 };
